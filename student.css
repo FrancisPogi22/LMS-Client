@@ -1,0 +1,906 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    padding: 10px 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+
+.logo img {
+    height: 40px; /* Adjust as needed */
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+nav ul li {
+    margin-left: 60px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #f1e3e3;
+}
+
+h1 {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.search-bar {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.search-bar input {
+    padding: 10px;
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.course-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 30px;
+    padding: 0 40px;
+    position: relative;
+    margin-top: 100px;
+}
+
+.course-button {
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    padding: 100px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.course-button:hover {
+    background-color: #0056b3;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.pagination-button {
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    margin: 0 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.pagination-button:hover {
+    background-color: #0056b3;
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 500px;
+    border-radius: 5px;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-action {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    margin-left: 400px;
+}
+
+.modal-action:hover {
+    background-color: #0056b3;
+    
+}
+h2{
+    background-color: #f7f8f8;
+    text-align: center;
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 40px;
+    margin-bottom: 50px;
+    color: rgb(0, 0, 0);
+
+}
+.close-button{
+    background-color: #0056b3;
+    border-radius: 60px;
+    position: relative;
+    margin-right: 480px;
+    bottom: 15px;
+    width: 30px;
+    text-align: center;
+    
+
+}
+
+
+
+
+
+
+
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .course {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        width: 300px;
+        height: 300px;
+        display: inline-block;
+        vertical-align: top;
+        text-align: center;
+        overflow: hidden;
+        background-color: #4682B4;
+
+    }
+    .course img {
+        max-width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    .course h3 {
+        margin: 0 0 10px;
+        color: #333;
+        font-size: 18px;
+    }
+    .button {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .button:hover {
+        background-color: #0056b3;
+    }
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        overflow: auto;
+    }
+    .modal-content {
+        background-color: #fff;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 8px;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close:hover {
+        color: #000;
+    }
+    .progress-bar {
+        width: 100%;
+        background-color: #f3f3f3;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .progress {
+        height: 24px;
+        background-color: #4caf50;
+        border-radius: 8px;
+        text-align: center;
+        color: #fff;
+        line-height: 24px;
+    }
+
+    .button {
+    display: inline-block;
+    padding: 10px 15px;
+    background-color: #4caf50;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+
+}
+nav ul li a i {
+margin-right: 5px; /* Space between icon and text */
+vertical-align: middle; /* Aligns icon with text */
+}
+/* Basic styling for the navigation bar */
+nav ul {
+list-style-type: none;
+padding: 0;
+display: flex;
+gap: 15px;
+}
+
+nav ul li {
+display: inline;
+}
+
+nav ul li a {
+text-decoration: none;
+color: #333;
+font-size: 16px;
+transition: color 0.3s ease, transform 0.3s ease; /* Smooth transition for hover effects */
+display: flex;
+align-items: center;
+}
+
+nav ul li a i {
+margin-right: 5px; /* Space between icon and text */
+}
+
+/* Hover animation */
+nav ul li a:hover {
+color: #007BFF; /* Change to your preferred color */
+transform: scale(1.1); /* Slightly enlarge the link on hover */
+}
+
+/* Optional: Underline effect on hover */
+nav ul li a::after {
+content: '';
+display: block;
+width: 0;
+height: 2px;
+background: #007BFF; /* Underline color */
+transition: width 0.3s ease;
+}
+
+nav ul li a:hover::after {
+width: 100%; /* Full-width underline on hover */
+}
+
+.button:hover {
+    background-color: #38a716;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* Modal Background and Content */
+/* Modal Background and Content */
+.modal {
+    display: none; /* Hidden by default, will be displayed when opened */
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent background */
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px; /* Optional: Adjust the width */
+}
+
+/* Modal Close Button */
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 25px;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Scrollable Description */
+.course-description {
+    max-height: 300px; /* Set a fixed height */
+    overflow-y: scroll; /* Enable vertical scrolling */
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.5;
+    padding-right: 10px; /* Add some space to the right to avoid text touching the scrollbar */
+    padding-bottom: 5px; /* Add a little space at the bottom */
+    word-wrap: break-word; /* Ensure text wraps correctly */
+    white-space: normal; /* Allow the text to break and wrap within the container */
+}
+
+/* Ensure the Enroll button is styled properly */
+.button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.button:hover {
+    background-color: #45a049;
+}
+
+
+
+
+/* profile students */
+
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f7f8fc;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    padding: 10px 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.logo img {
+    height: 40px; /* Adjust as needed */
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+nav ul li {
+    margin-left: 60px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #0c0000;
+}
+.profile img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.profile-section {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background-image: url('./images/background.jpg'); /* Replace with your background image */
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+}
+
+.profile-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-right: 20px;
+}
+
+.profile-info h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.profile-info p {
+    margin: 5px 0 0;
+    color: #666;
+}
+
+.courses {
+    padding: 20px;
+    margin: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.courses h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #000000;
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+.filter select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.course-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 100px;
+    
+}
+
+.course-card {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid black;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    height: 22vh;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+}
+
+.course-card h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #333;
+}
+
+.course-card p {
+    margin: 0 0 10px;
+    color: #666;
+}
+
+.progress-bar {
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    height: 8px;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.progress {
+    height: 100%;
+    background-color: #2563eb;
+    border-radius: 5px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 15px;
+    background-color: #3b82f6;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    text-align: center;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+}
+
+.btn:hover {
+    background-color: #2563eb;
+}
+
+.status-badge {
+    background-color: #2563eb;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.container {
+        max-width: 1700px;
+        margin: 0 auto;
+    }
+    .course {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        width: 300px;
+        height: 300px;
+        display: inline-block;
+        vertical-align: top;
+        text-align: center;
+        overflow: hidden;
+        margin-top: 80px;
+        background-color: #4682B4;
+
+    }
+    .course img {
+        max-width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    .course h3 {
+        margin: 0 0 10px;
+        color: #ddd2d2;
+        font-size: 18px;
+    }
+    .button {
+        display: inline-block;
+        margin-top: 5px;
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        cursor: pointer;
+    
+       
+    }
+
+    .view-coursebutton{
+        display: inline-block;
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .view-coursebutton:hover{
+        background-color: #0056b3;
+
+    }
+
+
+    .button:hover {
+        background-color: #0056b3;
+    }
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        overflow: auto;
+    }
+    .modal-content {
+        background-color: #fff;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 8px;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close:hover {
+        color: #000;
+    }
+    .progress-bar {
+        width: 100%;
+        background-color: #f3f3f3;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .progress {
+        height: 24px;
+        background-color: #4caf50;
+        border-radius: 8px;
+        text-align: center;
+        color: #fff;
+        line-height: 24px;
+    }
+
+
+
+.button:hover {
+    background-color: #45a049;
+}
+.logout-button {
+display: inline-block;
+padding: 10px 15px;
+background-color: #dc3545; /* Bootstrap danger color */
+color: #fff;
+text-decoration: none;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+font-weight: bold;
+transition: background-color 0.3s ease;
+margin-left: 1600px; 
+}
+
+.logout-button:hover {
+background-color: #c82333; /* Darker shade for hover effect */
+}
+
+/* Style for the form container */
+#uploadForm {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Style for the label */
+#uploadForm label {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* Style for the file input field */
+#uploadForm input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    background-color: #fff;
+    color: #fdfdfd;
+}
+
+/* Style for the submit button */
+#uploadForm button[type="submit"] {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+/* Hover effect for the button */
+#uploadForm button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+.nav-list {
+list-style: none;
+padding: 0;
+margin: 0;
+}
+
+.nav-list li {
+display: inline-block;
+margin-right: 20px; /* Adds space between list items */
+}
+
+.nav-list a {
+text-decoration: none;
+color: #eeeeee; /* Dark text color */
+font-size: 16px;
+font-weight: bold;
+padding: 10px 15px;
+border-radius: 5px; /* Rounded corners for the button effect */
+transition: all 0.3s ease; /* Smooth transition for hover effects */
+}
+
+/* Hover Effect */
+.nav-list a:hover {
+color: #fff; /* White text color on hover */
+background-color: #007bff; /* Blue background on hover */
+transform: scale(1.1); /* Slightly enlarge the link */
+}
+
+/* Animation for the Hover Effect */
+.nav-list a {
+transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Optional: Adding a shadow effect on hover for more emphasis */
+.nav-list a:hover {
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Adds a subtle shadow */
+
+}
+
+
+
+    /* Each individual course container */
+   /* Button styling for "View Course" */
+   .view-coursebutton {
+    background-color: #36454f; /* Blue background color */
+    color: white; /* White text for contrast */
+    padding: 10px 20px; /* Adds padding around the text */
+    text-decoration: none; /* Removes underline */
+    border-radius: 5px; /* Rounded corners */
+    display: inline-block; /* Keeps it inline with other elements */
+    margin-top: 10px; /* Adds space above the button */
+    width: 60%; /* Makes the button take up the full width of the course box */
+    text-align: center; /* Centers the text inside the button */
+    box-sizing: border-box; /* Ensures padding doesn't affect width calculation */
+}
+
+/* Ensure the button is visible even if the background color is blue */
+.view-coursebutton:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    cursor: pointer; /* Change cursor on hover for better UX */
+}
+
+.course {
+    width: 250px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #007BFF; /* Retaining blue background color */
+    color: white; /* Making text white for contrast */
+    overflow: hidden;
+}
+
+/* Style for the course title (name) */
+.course-info h3 {
+    font-size: 18px;
+    color: rgb(12, 0, 0); /* White text for contrast */
+    margin: 10px 0;
+    word-wrap: break-word;
+    white-space: nowrap; /* Prevent wrapping to next line */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adds '...' if text overflows */
+    max-width: 100%; /* Ensure it takes full width */
+    display: block;
+    text-align: center; /* Ensure text is centered */
+    box-sizing: border-box;
+}
+
+/* Container for the course title to add horizontal scrolling */
+.course-title-wrapper {
+    width: 100%;
+    overflow-x: auto; /* Enable horizontal scroll */
+}
+
+/* Optional: Add styling for the scrollbar if you want it to be custom */
+.course-title-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.course-title-wrapper::-webkit-scrollbar-thumb {
+    background-color: green;
+    border-radius: 10px;
+}
+
+.course-title-wrapper::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+
+
+
+.button1 {
+    background-color: rgb(255, 255, 255);
+    display: inline-block;
+    padding: 8px 15px;
+    background-color: #327ffa;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    text-align: center;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+
+}
+.button1:hover {
+    background-color: #0dcf6e;
+}
+
