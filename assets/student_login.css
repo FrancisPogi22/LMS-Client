@@ -1,0 +1,61 @@
+#student .student-container {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+}
+#student .student-container > div {
+  width: 50%;
+}
+#student .student-container > div img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+#student .student-container .container {
+  padding: 50px;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+}
+#student .container h1,
+#student .container .register-link,
+#student .container .btn-container,
+#student .container .forgot-password {
+  text-align: center;
+}
+#student .forgot-password-link {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 50px;
+  align-items: center;
+}
+#student .forgot-password-link p,
+#student .forgot-password-link a {
+  font-size: 14px;
+}
+#student .forgot-password-link .forgot-password {
+  margin-top: 0;
+}
+@media screen and (max-width: 1024px) {
+  #student .student-container .container {
+    padding: 30px;
+  }
+  #student .forgot-password-link {
+    flex-direction: column;
+  }
+}
+@media screen and (max-width: 767px) {
+  #student .student-container {
+    flex-direction: column;
+  }
+  #student .student-container > div {
+    width: 100%;
+  }
+  #student .student-container > div img {
+    max-height: 300px;
+  }
+  #student .forgot-password-link p,
+  #student .forgot-password-link a {
+    text-align: center;
+  }
+}

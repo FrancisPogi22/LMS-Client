@@ -1,0 +1,17 @@
+#login .login-container {
+  text-align: center;
+  background: var(--global-color-white);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  padding: 50px;
+  max-width: 700px;
+  width: 100%;
+  margin: 0 auto;
+}
+#login .button-container {
+  margin-top: 50px;
+}
+@media screen and (max-width: 767px){
+    #login .login-container {
+        padding: 30px;
+    }
+  }
