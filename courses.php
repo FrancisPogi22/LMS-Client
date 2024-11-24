@@ -133,27 +133,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <title><?php echo htmlspecialchars($course['course_name']); ?></title>
     <link rel="stylesheet" href="./css/courses.css">
-    
+    <link rel="stylesheet" href="./assets/theme.css">
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
 </head>
+
 <body>
-<header 
-    class="header" 
-    style="background-image: url('<?php echo htmlspecialchars($course['course_image']); ?>'); background-size: cover; background-position: center; background-repeat: no-repeat;">
-    <button class="back-button" onclick="window.location.href='profile_students.php'">←</button>
-    <div class="course-details">
-        <h2><?php echo htmlspecialchars($course['course_name']); ?></h2>
-    </div>
-</header>
+    <header
+        class="header"
+        style="background-image: url('<?php echo htmlspecialchars($course['course_image']); ?>'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+        <button class="back-button" onclick="window.location.href='profile_students.php'">←</button>
+        <div class="course-details">
+            <h2><?php echo htmlspecialchars($course['course_name']); ?></h2>
+        </div>
+    </header>
 
 
 
@@ -166,448 +168,545 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
         <div class="tab" onclick="openTab(event, 'certificateTab')">E-Certificates</div>
 
     </div>
+    <!-- Display E-Certificates -->
+    <div id="certificateTab" class="tab-content" style="display: none;">
+        <h3 style="text-align: center; font-family: Arial, sans-serif; margin-bottom: 20px;">E-Certificates</h3>
+        <?php
+        // Fetch e-certificates for the current course and student
+        $certificates = $pdo->prepare("
+        SELECT * 
+        FROM e_certificates 
+        WHERE course_id = ? AND student_id = ?
+    ");
+        $certificates->execute([$course_id, $student_id]);
+        $certificates = $certificates->fetchAll(PDO::FETCH_ASSOC);
 
+        if (count($certificates) > 0): ?>
+            <div class="certificates-container">
+                <?php foreach ($certificates as $certificate): ?>
+                    <div class="certificate-display">
+                        <?php
+                        $filePath = htmlspecialchars($certificate['certificate_path']);
+                        $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
+
+                        // Display certificates based on file type
+                        if (in_array($fileExtension, ['jpg', 'jpeg', 'png'])): ?>
+                            <img src="<?php echo $filePath; ?>" alt="Certificate" class="certificate-image">
+                        <?php elseif ($fileExtension === 'pdf'): ?>
+                            <iframe src="<?php echo $filePath; ?>" class="certificate-pdf"></iframe>
+                        <?php else: ?>
+                            <p>Unsupported file type.</p>
+                        <?php endif; ?>
+                        <p class="certificate-date">Uploaded on: <?php echo htmlspecialchars($certificate['uploaded_at']); ?></p>
+                        <!-- Download Button -->
+                        <a href="<?php echo $filePath; ?>" download class="download-button">Download Certificate</a>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p style="text-align: center; font-size: 16px; color: #555;">No certificates available for this course.</p>
+        <?php endif; ?>
+    </div>
 
 
     <!-- Overview Tab -->
     <div id="overviewTab" class="tab-content active">
-    <h3>Overview</h3>
-    <p><strong>Description:</strong> <?php echo htmlspecialchars($course['course_description']); ?></p>
-    <p><strong>Instructor:</strong> <?php echo htmlspecialchars($course['instructor_name'] ?? 'Not available'); ?></p>
-    
-    <div class="instructor-profile">
-        <h4>Instructor Profile</h4>
-        <?php if ($course['profile_picture']): ?>
-            <img src="<?php echo htmlspecialchars($course['profile_picture']); ?>" alt="Instructor Profile Picture" class="instructor-image">
-        <?php else: ?>
-            <img src="default-profile.jpg" alt="Default Profile Picture" class="instructor-image">
-        <?php endif; ?>
-        <p><strong>Name:</strong> <?php echo htmlspecialchars($course['instructor_name']); ?></p>
-        <p><strong>Email:</strong> <?php echo htmlspecialchars($course['email']); ?></p>
-        <p><strong>Gender:</strong> <?php echo htmlspecialchars($course['gender']); ?></p>
-    </div>
-</div>
+        <h3>Overview</h3>
+        <p><strong>Description:</strong> <?php echo htmlspecialchars($course['course_description']); ?></p>
+        <p><strong>Instructor:</strong> <?php echo htmlspecialchars($course['instructor_name'] ?? 'Not available'); ?></p>
 
-
-
-<!-- Modules Tab -->
-<div id="modulesTab" class="tab-content">
-    <!-- Course Progress Bar -->
-    <div id="progressContainerModules" style="margin-top: 20px; width: 100%; margin-bottom: 20px;">
-        <label for="progressBarModules" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
-        <div style="background-color: #f3f3f3; width: 100%; border-radius: 5px; overflow: hidden;">
-            <div id="progressBarModules" style="height: 15px; width: 0%; background-color: #4caf50;"></div>
+        <div class="instructor-profile">
+            <h4>Instructor Profile</h4>
+            <?php if ($course['profile_picture']): ?>
+                <img src="<?php echo htmlspecialchars($course['profile_picture']); ?>" alt="Instructor Profile Picture" class="instructor-image">
+            <?php else: ?>
+                <img src="default-profile.jpg" alt="Default Profile Picture" class="instructor-image">
+            <?php endif; ?>
+            <p><strong>Name:</strong> <?php echo htmlspecialchars($course['instructor_name']); ?></p>
+            <p><strong>Email:</strong> <?php echo htmlspecialchars($course['email']); ?></p>
+            <p><strong>Gender:</strong> <?php echo htmlspecialchars($course['gender']); ?></p>
         </div>
     </div>
 
-    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Modules (PDF)</h3>
-    <div class="uploaded-modules" style="list-style-type: none; padding: 0; margin-top: 10px;">
-        <?php if (empty($modules)): ?>
-            <p>No PDF files available for this course yet.</p>
-        <?php else: ?>
-            <?php foreach ($modules as $module): ?>
-                <?php if ($module['module_file']): ?>
-                    <div class="module" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #ddd;">
-                        <div class="module-box" style="border: 1px solid black; border-radius: 8px; padding: 10px; width: 100%; margin-bottom: 10px;">
-                            <div class="module-title" style="font-size: 14px; font-weight: bold; color: #333; flex: 1;">
-                                <?php echo htmlspecialchars($module['title']); ?>
-                            </div><br>
-                            <button onclick="viewPDF('<?php echo htmlspecialchars($module['module_file']); ?>', '<?php echo htmlspecialchars($module['title']); ?>')" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">View Modules</button>
-                            <!-- Completion Button -->
-                            <button class="completion-button" data-module-id="<?php echo $module['id']; ?>" onclick="markCompleted(event)" style="padding: 5px 8px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 1600px;">
-                                <?php echo in_array($module['id'], $completed_modules) ? 'Completed' : 'Mark as Completed'; ?>
-                            </button>
-                        </div>
-                    </div>
-                <?php endif; ?>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-
-    <!-- PDF Modal -->
-    <div id="pdfModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center;">
-        <div style="background: white; width: 80%; max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 15px; position: relative;">
-            <!-- Close button for the PDF modal -->
-            <span onclick="closeModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #333;">&times;</span>
-            
-            <h2 id="pdfTitle" style="font-size: 18px; margin-bottom: 10px;"></h2>
-            <iframe id="pdfViewer" src="" width="100%" height="600px"></iframe>
-        </div>
-    </div>
-</div>
-
-<!-- Content Tab -->
-<div id="contentTab" class="tab-content">
-    <!-- Progress Bar -->
-    <div id="progressContainer" style="margin-top: 20px; width: 100%;">
-        <label for="progressBar" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
-        <div style="background-color: #f3f3f3; width: 100%; border-radius: 5px; overflow: hidden;">
-            <div id="progressBar" style="height: 15px; width: 0%; background-color: #4caf50;"></div>
-        </div>
-    </div>
-
-    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Videos</h3>
-    <div class="uploaded-modules" style="list-style-type: none; padding: 0; margin-top: 10px;">
-        <?php if (empty($modules)): ?>
-            <p>No videos available for this course yet.</p>
-        <?php else: ?>
-            <?php foreach ($modules as $index => $module): ?>
-                <?php if ($module['video_file']): ?>
-                    <div class="module" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #ddd;">
-                        <div class="module-box" style="border: 1px solid black; border-radius: 8px; padding: 10px; width: 100%; margin-bottom: 10px;">
-                            <div class="module-title" style="font-size: 14px; font-weight: bold; color: #333; flex: 1;"><?php echo htmlspecialchars($module['title']); ?></div><br>
-                            <button onclick="showContent('<?php echo htmlspecialchars($module['title']); ?>', '<?php echo htmlspecialchars($module['video_file']); ?>')" style="padding: 5px 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">View Video</button>
-                            <!-- Completion Button -->
-                            <button class="completion-button" data-module-id="<?php echo $module['id']; ?>" onclick="markCompleted(event)" style="padding: 5px 8px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 1600px;">
-                                <?php echo in_array($module['id'], $completed_modules) ? 'Completed' : 'Mark as Completed'; ?>
-                            </button>
-                        </div>
-                    </div>
-                <?php endif; ?>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-</div>
-
-<!-- Video Modal -->
-<div id="videoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center;">
-    <div style="background: white; width: 80%; max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 15px; position: relative;">
-        <span onclick="closeModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
-        <h2 id="videoTitle" style="font-size: 18px; margin-bottom: 10px;"></h2>
-        <video id="videoPlayer" controls style="width: 100%; height: auto; max-height: 80vh;">
-            <source id="videoSource" src="" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-    </div>
-</div>
 
 
-   <!-- Forum Tab -->
-<div id="forumTab" class="tab-content">
-    <h3>Forum</h3>
-    
-    <!-- Button to trigger the post form -->
-    <button id="postButton" class="post-button" onclick="togglePostForm()">Post a new message</button>
-
-    <!-- Post Form (hidden by default) -->
-    <div id="postForm" class="post-form" style="display: none; margin-top: 20px;">
-        <form method="POST" enctype="multipart/form-data"> <!-- Added form tag and enctype -->
-            <textarea name="post_content" rows="4" placeholder="What's on your mind?" required></textarea>
-            <input type="file" name="post_image" accept="image/*">
-            <div class="form-actions">
-                <button type="submit">Post</button> <!-- Submit button for the form -->
-                <button type="button" class="cancel-button" onclick="togglePostForm()">Cancel</button>
+    <!-- Modules Tab -->
+    <div id="modulesTab" class="tab-content">
+        <!-- Course Progress Bar -->
+        <div id="progressContainerModules" style="margin-top: 20px; width: 100%; margin-bottom: 20px;">
+            <label for="progressBarModules" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
+            <div style="background-color: #f3f3f3; width: 100%; border-radius: 5px; overflow: hidden;">
+                <div id="progressBarModules" style="height: 15px; width: 0%; background-color: #4caf50;"></div>
             </div>
-        </form>
+        </div>
+
+        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Modules (PDF)</h3>
+        <div class="uploaded-modules" style="list-style-type: none; padding: 0; margin-top: 10px;">
+            <?php if (empty($modules)): ?>
+                <p>No PDF files available for this course yet.</p>
+            <?php else: ?>
+                <?php foreach ($modules as $module): ?>
+                    <?php if ($module['module_file']): ?>
+                        <div class="module" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #ddd;">
+                            <div class="module-box" style="border: 1px solid black; border-radius: 8px; padding: 10px; width: 100%; margin-bottom: 10px;">
+                                <div class="module-title" style="font-size: 14px; font-weight: bold; color: #333; flex: 1;">
+                                    <?php echo htmlspecialchars($module['title']); ?>
+                                </div><br>
+                                <button onclick="viewPDF('<?php echo htmlspecialchars($module['module_file']); ?>', '<?php echo htmlspecialchars($module['title']); ?>')" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">View Modules</button>
+                                <!-- Completion Button -->
+                                <button class="completion-button" data-module-id="<?php echo $module['id']; ?>" onclick="markCompleted(event)" style="padding: 5px 8px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 1600px;">
+                                    <?php echo in_array($module['id'], $completed_modules) ? 'Completed' : 'Mark as Completed'; ?>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
+        <!-- PDF Modal -->
+        <div id="pdfModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center;">
+            <div style="background: white; width: 80%; max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 15px; position: relative;">
+                <!-- Close button for the PDF modal -->
+                <span onclick="closeModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #333;">&times;</span>
+
+                <h2 id="pdfTitle" style="font-size: 18px; margin-bottom: 10px;"></h2>
+                <iframe id="pdfViewer" src="" width="100%" height="600px"></iframe>
+            </div>
+        </div>
     </div>
 
-    <h4>Posts</h4>
-    <?php if (empty($posts)): ?>
-        <p>No posts yet.</p>
-    <?php else: ?>
-        <?php 
+    <!-- Content Tab -->
+    <div id="contentTab" class="tab-content">
+        <!-- Progress Bar -->
+        <div id="progressContainer" style="margin-top: 20px; width: 100%;">
+            <label for="progressBar" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
+            <div style="background-color: #f3f3f3; width: 100%; border-radius: 5px; overflow: hidden;">
+                <div id="progressBar" style="height: 15px; width: 0%; background-color: #4caf50;"></div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Videos</h3>
+        <div class="uploaded-modules" style="list-style-type: none; padding: 0; margin-top: 10px;">
+            <?php if (empty($modules)): ?>
+                <p>No videos available for this course yet.</p>
+            <?php else: ?>
+                <?php foreach ($modules as $index => $module): ?>
+                    <?php if ($module['video_file']): ?>
+                        <div class="module" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #ddd;">
+                            <div class="module-box" style="border: 1px solid black; border-radius: 8px; padding: 10px; width: 100%; margin-bottom: 10px;">
+                                <div class="module-title" style="font-size: 14px; font-weight: bold; color: #333; flex: 1;"><?php echo htmlspecialchars($module['title']); ?></div><br>
+                                <button onclick="showContent('<?php echo htmlspecialchars($module['title']); ?>', '<?php echo htmlspecialchars($module['video_file']); ?>')" style="padding: 5px 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">View Video</button>
+                                <!-- Completion Button -->
+                                <button class="completion-button" data-module-id="<?php echo $module['id']; ?>" onclick="markCompleted(event)" style="padding: 5px 8px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 1600px;">
+                                    <?php echo in_array($module['id'], $completed_modules) ? 'Completed' : 'Mark as Completed'; ?>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Video Modal -->
+    <div id="videoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center;">
+        <div style="background: white; width: 80%; max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 15px; position: relative;">
+            <span onclick="closeModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
+            <h2 id="videoTitle" style="font-size: 18px; margin-bottom: 10px;"></h2>
+            <video id="videoPlayer" controls style="width: 100%; height: auto; max-height: 80vh;">
+                <source id="videoSource" src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+
+
+    <!-- Forum Tab -->
+    <div id="forumTab" class="tab-content">
+        <h3>Forum</h3>
+
+        <!-- Button to trigger the post form -->
+        <button id="postButton" class="post-button" onclick="togglePostForm()">Post a new message</button>
+
+        <!-- Post Form (hidden by default) -->
+        <div id="postForm" class="post-form" style="display: none; margin-top: 20px;">
+            <form method="POST" enctype="multipart/form-data"> <!-- Added form tag and enctype -->
+                <textarea name="post_content" rows="4" placeholder="What's on your mind?" required></textarea>
+                <input type="file" name="post_image" accept="image/*">
+                <div class="form-actions">
+                    <button type="submit">Post</button> <!-- Submit button for the form -->
+                    <button type="button" class="cancel-button" onclick="togglePostForm()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <h4>Posts</h4>
+        <?php if (empty($posts)): ?>
+            <p>No posts yet.</p>
+        <?php else: ?>
+            <?php
             // Reverse the posts array so the latest posts are displayed first
             $posts = array_reverse($posts);
-        ?>
-        <?php foreach ($posts as $post): ?>
-            <div class="forum-post">
-                <p><strong><?php echo htmlspecialchars($post['student_name']); ?></strong> <span style="color: #888;">(<?php echo htmlspecialchars($post['created_at']); ?>)</span></p>
-                <p><?php echo htmlspecialchars($post['content']); ?></p>
-                <?php if ($post['image']): ?>
-                    <img src="<?php echo htmlspecialchars($post['image']); ?>" alt="Post Image" class="post-image">
-                <?php endif; ?>
-                
-                <div class="comments">
-                    <h5>Comments:</h5>
-                    <?php if (isset($comments[$post['id']]) && !empty($comments[$post['id']])): ?>
-                        <?php foreach ($comments[$post['id']] as $comment): ?>
-                            <div class="comment">
-                                <p><strong><?php echo htmlspecialchars($comment['student_name']); ?></strong> <span style="color: #888;">(<?php echo htmlspecialchars($comment['created_at']); ?>)</span></p>
-                                <p><?php echo htmlspecialchars($comment['content']); ?></p>
-                                
-                                <div class="replies">
-                                    <?php if (!empty($comment['replies'])): ?>
-                                        <h6>Replies:</h6>
-                                        <?php foreach ($comment['replies'] as $reply): ?>
-                                            <div class="reply">
-                                                <p><strong><?php echo htmlspecialchars($reply['student_name']); ?></strong> <span style="color: #888;">(<?php echo htmlspecialchars($reply['created_at']); ?>)</span></p>
-                                                <p><?php echo htmlspecialchars($reply['content']); ?></p>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                    
-                                    <!-- Reply Form -->
-                                    <form method="POST" class="reply-form">
-                                        <textarea name="reply_content" rows="2" placeholder="Add a reply..." required></textarea>
-                                        <input type="hidden" name="comment_id" value="<?php echo $comment['comment_id']; ?>">
-                                        <button type="submit">Reply</button>
-                                    </form>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <p>No comments yet.</p>
+            ?>
+            <?php foreach ($posts as $post): ?>
+                <div class="forum-post">
+                    <p><strong><?php echo htmlspecialchars($post['student_name']); ?></strong> <span style="color: #888;">(<?php echo htmlspecialchars($post['created_at']); ?>)</span></p>
+                    <p><?php echo htmlspecialchars($post['content']); ?></p>
+                    <?php if ($post['image']): ?>
+                        <img src="<?php echo htmlspecialchars($post['image']); ?>" alt="Post Image" class="post-image">
                     <?php endif; ?>
+
+                    <div class="comments">
+                        <h5>Comments:</h5>
+                        <?php if (isset($comments[$post['id']]) && !empty($comments[$post['id']])): ?>
+                            <?php foreach ($comments[$post['id']] as $comment): ?>
+                                <div class="comment">
+                                    <p><strong><?php echo htmlspecialchars($comment['student_name']); ?></strong> <span style="color: #888;">(<?php echo htmlspecialchars($comment['created_at']); ?>)</span></p>
+                                    <p><?php echo htmlspecialchars($comment['content']); ?></p>
+
+                                    <div class="replies">
+                                        <?php if (!empty($comment['replies'])): ?>
+                                            <h6>Replies:</h6>
+                                            <?php foreach ($comment['replies'] as $reply): ?>
+                                                <div class="reply">
+                                                    <p><strong><?php echo htmlspecialchars($reply['student_name']); ?></strong> <span style="color: #888;">(<?php echo htmlspecialchars($reply['created_at']); ?>)</span></p>
+                                                    <p><?php echo htmlspecialchars($reply['content']); ?></p>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+
+                                        <!-- Reply Form -->
+                                        <form method="POST" class="reply-form">
+                                            <textarea name="reply_content" rows="2" placeholder="Add a reply..." required></textarea>
+                                            <input type="hidden" name="comment_id" value="<?php echo $comment['comment_id']; ?>">
+                                            <button type="submit">Reply</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p>No comments yet.</p>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Comment Form -->
+                    <form method="POST" class="comment-form">
+                        <textarea name="comment_content" rows="2" placeholder="Add a comment..." required></textarea>
+                        <input type="hidden" name="post_id" value="<?php echo $post['id']; ?>">
+                        <button type="submit">Comment</button>
+                    </form>
                 </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
 
-                <!-- Comment Form -->
-                <form method="POST" class="comment-form">
-                    <textarea name="comment_content" rows="2" placeholder="Add a comment..." required></textarea>
-                    <input type="hidden" name="post_id" value="<?php echo $post['id']; ?>">
-                    <button type="submit">Comment</button>
-                </form>
-            </div>
-        <?php endforeach; ?>
-    <?php endif; ?>
-</div>
+    <script>
+        function togglePostForm() {
+            var postForm = document.getElementById('postForm');
+            postForm.style.display = postForm.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+    <div id="assessmentTab" class="tab-content">
+        <h3>Assessments</h3>
 
-<script>
-function togglePostForm() {
-    var postForm = document.getElementById('postForm');
-    postForm.style.display = postForm.style.display === 'none' ? 'block' : 'none';
-}
-</script>
-<div id="assessmentTab" class="tab-content">
-    <h3>Assessments</h3>
-
-    <?php
-    // Fetch assessments for the course
-    $assessments = $pdo->prepare("
+        <?php
+        // Fetch assessments for the course
+        $assessments = $pdo->prepare("
         SELECT a.*, i.name AS instructor_name 
         FROM assessments a
         JOIN instructors i ON a.instructor_id = i.id
         WHERE a.course_id = ?
     ");
-    $assessments->execute([$course_id]);
-    $assessments = $assessments->fetchAll(PDO::FETCH_ASSOC);
+        $assessments->execute([$course_id]);
+        $assessments = $assessments->fetchAll(PDO::FETCH_ASSOC);
 
-    // Check if assessments are available
-    if (!empty($assessments)): 
-        foreach ($assessments as $assessment):
-            // Fetch submission for the specific student for this assessment
-            $submission = $pdo->prepare("SELECT * FROM assessment_submissions WHERE assessment_id = ? AND student_id = ?");
-            $submission->execute([$assessment['id'], $student_id]);
-            $submission = $submission->fetch(PDO::FETCH_ASSOC);
-    ?>
-            <div class="assessment">
-                <p><strong>Assessment Title:</strong> <?php echo htmlspecialchars($assessment['assessment_title']); ?></p>
-                <p><strong>Instructor:</strong> <?php echo htmlspecialchars($assessment['instructor_name']); ?></p>
-                <p><strong>Assessment Description:</strong> <?php echo nl2br(htmlspecialchars($assessment['assessment_description'])); ?></p>
-                <p><em>Posted on: <?php echo date('F d, Y', strtotime($assessment['created_at'])); ?></em></p>
-                
-                <?php if ($submission): ?>
+        // Check if assessments are available
+        if (!empty($assessments)):
+            foreach ($assessments as $assessment):
+                $submission = $pdo->prepare("SELECT * FROM assessment_submissions WHERE assessment_id = ? AND student_id = ?");
+                $submission->execute([$assessment['id'], $student_id]);
+                $submission = $submission->fetch(PDO::FETCH_ASSOC);
+        ?>
+                <div class="assessment">
+                    <p><strong>Assessment Title:</strong> <?php echo htmlspecialchars($assessment['assessment_title']); ?></p>
+                    <p><strong>Instructor:</strong> <?php echo htmlspecialchars($assessment['instructor_name']); ?></p>
+                    <p><strong>Assessment Description:</strong> <?php echo nl2br(htmlspecialchars($assessment['assessment_description'])); ?></p>
+                    <p><em>Posted on: <?php echo date('F d, Y', strtotime($assessment['created_at'])); ?></em></p>
+                    <?php if ($submission): ?>
+                        <div class="feedback">
+                            <h4>Your Submission</h4>
+                            <p><?php echo nl2br(htmlspecialchars($submission['submission_text'])); ?></p>
+                            <p><em>Submitted on: <?php echo date('F d, Y', strtotime($submission['created_at'])); ?></em></p>
+                        </div>
+                    <?php else: ?>
+                        <?php
+                        function handleAssignmentUpload($pdo, $course_id, $student_id, $assessment_id)
+                        {
+                            if (isset($_FILES['post_file']) && $_FILES['post_file']['error'] === UPLOAD_ERR_OK) {
+                                $fileTmpPath = $_FILES['post_file']['tmp_name'];
+                                $fileName = $_FILES['post_file']['name'];
+                                $fileSize = $_FILES['post_file']['size'];
+                                $fileType = $_FILES['post_file']['type'];
+
+                                $allowedFileTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                                $uploadDir = 'uploads/';
+
+                                if (!in_array($fileType, $allowedFileTypes)) {
+                                    return "Invalid file type. Only PDF and DOCX files are allowed.";
+                                }
+
+                                $newFileName = uniqid() . '-' . basename($fileName);
+
+                                if (move_uploaded_file($fileTmpPath, $uploadDir . $newFileName)) {
+                                    // Check for missing parameters
+                                    if (!$course_id || !$student_id || !$assessment_id) {
+                                        return "Missing required input data: course_id, student_id, or assessment_id.";
+                                    }
+
+                                    // Prepare and execute the query
+                                    $stmt = $pdo->prepare("
+                                        INSERT INTO assessment_submissions 
+                                        (assessment_id, student_id, course_id, submission_text, created_at) 
+                                        VALUES (:assessment_id, :student_id, :course_id, :submission_text, NOW())
+                                    ");
+
+                                    if (!$stmt->execute([
+                                        ':assessment_id' => $assessment_id,
+                                        ':student_id' => $student_id,
+                                        ':course_id' => $course_id,
+                                        ':submission_text' => $newFileName,
+                                    ])) {
+                                        return "Failed to insert into database: " . implode(" | ", $stmt->errorInfo());
+                                    }
+
+                                    return "Assignment uploaded and saved successfully.";
+                                } else {
+                                    return "There was an error moving the uploaded file.";
+                                }
+                            } else {
+                                return "No file was uploaded or an error occurred.";
+                            }
+                        }
+
+                        ?>
+                        <?php
+                        if (isset($_POST['send_assessment'])) {
+                            $course_id = $_GET['course_id'] ?? null;
+                            $student_id =  $_SESSION['student_id'];
+                            $assessment_id = rand(100, 999);
+                            $result = handleAssignmentUpload($pdo, $course_id, $student_id, $assessment_id);
+                            echo "<p>{$result}</p>";
+                        }
+
+                        ?>
+                        <form method="POST" enctype="multipart/form-data">
+                            <label for="post_file">Upload Your Assignment (PDF/DOC):</label>
+                            <input type="text" name="course_id" value="<?php echo htmlspecialchars($course_id); ?>" hidden>
+                            <input type="file" name="post_file" id="post_file" accept=".docx, .pdf" required>
+                            <button type="submit" name="send_assessment" class="btn-primary">Submit</button>
+                        </form>
+                    <?php endif; ?>
                     <div class="feedback">
-                        <h4>Your Submission</h4>
-                        <p><?php echo nl2br(htmlspecialchars($submission['submission_text'])); ?></p>
-                        <p><em>Submitted on: <?php echo date('F d, Y', strtotime($submission['created_at'])); ?></em></p>
-                    </div>
-                <?php else: ?>
-            <!-- HTML Form for File Upload -->
-<form action="your_php_script.php?course_id=<?php echo $course_id; ?>" method="POST" enctype="multipart/form-data">
-    <label for="post_file">Upload Your Assignment (PDF/DOC):</label>
-    <input type="file" name="post_file" id="post_file" required>
-    <button type="submit">Submit</button>
-</form>
-                <?php endif; ?>
-                <!-- SweetAlert2 CDN -->
-
-
-
-                <!-- Feedback Section -->
-                <div class="feedback">
-                    <h4>Feedback</h4>
-                    <?php
-                    if ($submission) { // Check if submission exists before querying feedback
-                        $feedbacks = $pdo->prepare("SELECT f.*, 
-                            CASE WHEN f.user_type = 'instructor' THEN i.name 
-                                 WHEN f.user_type = 'student' THEN s.name 
-                            END AS user_name
-                            FROM assessment_feedback f
-                            LEFT JOIN instructors i ON f.user_id = i.id AND f.user_type = 'instructor'
-                            LEFT JOIN students s ON f.user_id = s.id AND f.user_type = 'student'
-                            WHERE f.submission_id = ?");
-                        $feedbacks->execute([$submission['id']]);
+                        <h4>Feedback</h4>
+                        <?php
+                        $feedbacks = $pdo->prepare("SELECT
+                                af.id AS feedback_id,
+                                af.comment AS feedback_comment,
+                                af.created_at AS feedback_created_at,
+                                i.name,
+                                af.user_type
+                            FROM
+                                assessment_feedback af
+                            JOIN assessment_submissions s ON
+                                af.assessment_id = s.id
+                            JOIN instructors i ON
+                                af.user_id = i.id
+                            WHERE
+                                s.student_id = :student_id
+                            ORDER BY
+                                af.created_at
+                            DESC
+                                ");
+                        $feedbacks->execute([':student_id' => $_SESSION['student_id']]);
                         $feedbacks = $feedbacks->fetchAll(PDO::FETCH_ASSOC);
 
-                        if (!empty($feedbacks)): 
+                        if (!empty($feedbacks)):
                             foreach ($feedbacks as $feedback): ?>
                                 <div class="feedback-item">
-                                    <strong><?php echo htmlspecialchars($feedback['user_name']); ?> (<?php echo htmlspecialchars($feedback['user_type']); ?>):</strong>
-                                    <p><?php echo nl2br(htmlspecialchars($feedback['comment'])); ?></p>
-                                    <em><?php echo date('F d, Y', strtotime($feedback['created_at'])); ?></em>
+                                    <strong><?php echo htmlspecialchars($feedback['name']); ?> (<?php echo htmlspecialchars($feedback['user_type']); ?>):</strong>
+                                    <p><?php echo nl2br(htmlspecialchars($feedback['feedback_comment'])); ?></p>
+                                    <em><?php echo date('F d, Y', strtotime($feedback['feedback_created_at'])); ?></em>
                                 </div>
-                            <?php endforeach; 
+                            <?php endforeach;
                         else: ?>
                             <p>No feedback yet.</p>
-                        <?php endif; 
+                        <?php endif;
+                        ?>
+                    </div>
+                    <div class="student-comment">
+                        <h4>Add Your Comment:</h4>
+                        <form id="commentForm" method="POST" action="save_comment.php">
+                            <input type="hidden" name="post_id" value="<?php echo htmlspecialchars($submission['id']); ?>"> <!-- 'id' refers to 'assessment_submission.id' -->
+                            <input type="hidden" name="student_id" value="<?php echo htmlspecialchars($submission['student_id']); ?>">
+
+                            <textarea name="content" placeholder="Enter your comment" required rows="4"></textarea>
+                            <button type="submit" class="submit-btn">Post Comment</button>
+                        </form>
+                    </div>
+
+                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+                    <script>
+                        // Ensure the DOM is fully loaded before attaching event listeners
+                        document.addEventListener("DOMContentLoaded", function() {
+                            // Handle comment form submission
+                            document.getElementById('commentForm').addEventListener('submit', function(event) {
+                                event.preventDefault(); // Prevent the default form submission
+
+                                const form = new FormData(this); // Get form data
+
+                                // Send the data via AJAX to save_comment.php
+                                fetch('save_comment.php', {
+                                        method: 'POST',
+                                        body: form
+                                    })
+                                    .then(response => response.json()) // Parse the JSON response
+                                    .then(data => {
+                                        if (data.status === 'success') {
+                                            // SweetAlert for successful comment submission
+                                            Swal.fire({
+                                                title: 'Comment Posted!',
+                                                text: data.message,
+                                                icon: 'success',
+                                                confirmButtonText: 'Okay'
+                                            }).then(() => {
+                                                // Optionally, you can reload the page or update the comment section dynamically
+                                                location.reload(); // This will refresh the page to show the new comment
+                                            });
+                                        } else {
+                                            // SweetAlert for error if comment posting fails
+                                            Swal.fire({
+                                                title: 'Error!',
+                                                text: data.message,
+                                                icon: 'error',
+                                                confirmButtonText: 'Try Again'
+                                            });
+                                        }
+                                    })
+                                    .catch(error => {
+                                        // SweetAlert for any AJAX error
+                                        Swal.fire({
+                                            title: 'Error!',
+                                            text: 'There was an issue with your comment submission. Please try again.',
+                                            icon: 'error',
+                                            confirmButtonText: 'Try Again'
+                                        });
+                                    });
+                            });
+                        });
+                    </script>
+
+
+
+                    <!-- Displaying Comments -->
+                    <?php
+                    if ($submission) {
+                        // Fetch comments for the current submission (using the submission's 'id' as the 'post_id')
+                        $comments = $pdo->prepare("SELECT * FROM comments WHERE post_id = ?");
+                        $comments->execute([$submission['id']]);  // Use the submission 'id' as the 'post_id'
+                        $comments = $comments->fetchAll(PDO::FETCH_ASSOC);
+
+                        if (!empty($comments)):
+                            foreach ($comments as $comment): ?>
+                                <div class="comment-item">
+                                    <br>
+                                    <div class="comment-box">
+                                        <strong>You:</strong>
+                                        <p class="comment-content"><?php echo nl2br(htmlspecialchars($comment['content'])); ?></p>
+                                        <em class="comment-time" style="font-size: 0.85em; color: #888;"><?php echo date('F d, Y', strtotime($comment['created_at'])); ?></em>
+                                    </div>
+                                    <?php echo date('F d, Y', strtotime($comment['created_at'])); ?></em>
+
+                                    <!-- Fetching and Displaying Instructor's Reply to the Comment -->
+                                    <?php
+                                    $replies = $pdo->prepare("SELECT * FROM replies WHERE comment_id = ?");
+                                    $replies->execute([$comment['comment_id']]);  // Use the correct comment_id for replies
+                                    $replies = $replies->fetchAll(PDO::FETCH_ASSOC);
+
+                                    if (!empty($replies)):
+                                        foreach ($replies as $reply): ?>
+                                            <div class="reply-item">
+                                                <strong>Instructor (Reply):</strong>
+                                                <p class="reply-content"><?php echo nl2br(htmlspecialchars($reply['reply_content'])); ?></p>
+                                                <em class="reply-time"><?php echo date('F d, Y', strtotime($reply['created_at'])); ?></em>
+                                            </div>
+                                        <?php endforeach;
+                                    else: ?>
+                                        <p>No replies yet.</p>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach;
+                        else: ?>
+                            <p>No comments yet.</p>
+                    <?php endif;
                     }
                     ?>
                 </div>
-
-               <!-- Comment Section for Students -->
-<div class="student-comment">
-    <h4>Add Your Comment:</h4>
-    <form id="commentForm" method="POST" action="save_comment.php">
-        <input type="hidden" name="post_id" value="<?php echo htmlspecialchars($submission['id']); ?>"> <!-- 'id' refers to 'assessment_submission.id' -->
-        <input type="hidden" name="student_id" value="<?php echo htmlspecialchars($submission['student_id']); ?>">
-
-        <textarea name="content" placeholder="Enter your comment" required rows="4"></textarea>
-        <button type="submit" class="submit-btn">Post Comment</button>
-    </form>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-    // Ensure the DOM is fully loaded before attaching event listeners
-    document.addEventListener("DOMContentLoaded", function() {
-        // Handle comment form submission
-        document.getElementById('commentForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
-
-            const form = new FormData(this); // Get form data
-
-            // Send the data via AJAX to save_comment.php
-            fetch('save_comment.php', {
-                method: 'POST',
-                body: form
-            })
-            .then(response => response.json()) // Parse the JSON response
-            .then(data => {
-                if (data.status === 'success') {
-                    // SweetAlert for successful comment submission
-                    Swal.fire({
-                        title: 'Comment Posted!',
-                        text: data.message,
-                        icon: 'success',
-                        confirmButtonText: 'Okay'
-                    }).then(() => {
-                        // Optionally, you can reload the page or update the comment section dynamically
-                        location.reload(); // This will refresh the page to show the new comment
-                    });
-                } else {
-                    // SweetAlert for error if comment posting fails
-                    Swal.fire({
-                        title: 'Error!',
-                        text: data.message,
-                        icon: 'error',
-                        confirmButtonText: 'Try Again'
-                    });
-                }
-            })
-            .catch(error => {
-                // SweetAlert for any AJAX error
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'There was an issue with your comment submission. Please try again.',
-                    icon: 'error',
-                    confirmButtonText: 'Try Again'
-                });
-            });
-        });
-    });
-</script>
-
-
-
-                <!-- Displaying Comments -->
-                <?php
-                if ($submission) {
-                    // Fetch comments for the current submission (using the submission's 'id' as the 'post_id')
-                    $comments = $pdo->prepare("SELECT * FROM comments WHERE post_id = ?");
-                    $comments->execute([$submission['id']]);  // Use the submission 'id' as the 'post_id'
-                    $comments = $comments->fetchAll(PDO::FETCH_ASSOC);
-
-                    if (!empty($comments)):
-                        foreach ($comments as $comment): ?>
-                            <div class="comment-item">
-                                <br>
-                                <div class="comment-box">
-                                <strong>You:</strong>
-                                <p class="comment-content"><?php echo nl2br(htmlspecialchars($comment['content'])); ?></p>
-                                <em class="comment-time" style="font-size: 0.85em; color: #888;"><?php echo date('F d, Y', strtotime($comment['created_at'])); ?></em>
-                            </div>
-                                <?php echo date('F d, Y', strtotime($comment['created_at'])); ?></em>
-
-                                <!-- Fetching and Displaying Instructor's Reply to the Comment -->
-                                <?php
-                                $replies = $pdo->prepare("SELECT * FROM replies WHERE comment_id = ?");
-                                $replies->execute([$comment['comment_id']]);  // Use the correct comment_id for replies
-                                $replies = $replies->fetchAll(PDO::FETCH_ASSOC);
-
-                                if (!empty($replies)):
-                                    foreach ($replies as $reply): ?>
-                                        <div class="reply-item">
-                                            <strong>Instructor (Reply):</strong>
-                                            <p class="reply-content"><?php echo nl2br(htmlspecialchars($reply['reply_content'])); ?></p>
-                                            <em class="reply-time"><?php echo date('F d, Y', strtotime($reply['created_at'])); ?></em>
-                                        </div>
-                                    <?php endforeach;
-                                else: ?>
-                                    <p>No replies yet.</p>
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach;
-                    else: ?>
-                        <p>No comments yet.</p>
-                    <?php endif;
-                }
-                ?>
-            </div>
-        <?php endforeach; 
-    else: ?>
-        <p>No assessments available for this course.</p>
-    <?php endif; ?>
-</div>
-
-
-
-<div id="modal" class="modal">
-    <div class="modal-header">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h2 id="modal-title"></h2>
+            <?php endforeach;
+        else: ?>
+            <p>No assessments available for this course.</p>
+        <?php endif; ?>
     </div>
-    <div class="modal-content" id="modal-content"></div>
-</div>
-<!-- Footer -->
-<footer style="background-color: #333; color: #fff; padding: 20px 0; text-align: center;">
-    <div style="max-width: 1200px; margin: 0 auto; padding: 0 15px;">
-        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px;">
-            <!-- About Section -->
-            <div>
-                <h5>About Us</h5>
-                <p>We are dedicated to providing quality education and innovative solutions for students and instructors.</p>
+
+
+
+    <div id="modal" class="modal">
+        <div class="modal-header">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title"></h2>
+        </div>
+        <div class="modal-content" id="modal-content"></div>
+    </div>
+    <!-- Footer -->
+    <footer style="background-color: #333; color: #fff; padding: 20px 0; text-align: center;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 15px;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px;">
+                <!-- About Section -->
+                <div>
+                    <h5>About Us</h5>
+                    <p>We are dedicated to providing quality education and innovative solutions for students and instructors.</p>
+                </div>
+
+                <!-- Quick Links Section -->
+                <div>
+                    <h5>Quick Links</h5>
+                    <ul style="list-style-type: none; padding: 0;">
+                        <li><a href="home.php" style="color: #fff; text-decoration: none;">Home</a></li>
+                        <li><a href="about.php" style="color: #fff; text-decoration: none;">About</a></li>
+                        <li><a href="contact.php" style="color: #fff; text-decoration: none;">Contact</a></li>
+                        <li><a href="terms.php" style="color: #fff; text-decoration: none;">Terms of Service</a></li>
+                    </ul>
+                </div>
+
+                <!-- Social Media Section -->
+                <div>
+                    <h5>Follow Us</h5>
+                    <ul style="list-style-type: none; padding: 0;">
+                        <li><a href="#" style="color: #fff; text-decoration: none;">Facebook</a></li>
+                        <li><a href="#" style="color: #fff; text-decoration: none;">Twitter</a></li>
+                        <li><a href="#" style="color: #fff; text-decoration: none;">Instagram</a></li>
+                        <li><a href="#" style="color: #fff; text-decoration: none;">LinkedIn</a></li>
+                    </ul>
+                </div>
             </div>
 
-            <!-- Quick Links Section -->
-            <div>
-                <h5>Quick Links</h5>
-                <ul style="list-style-type: none; padding: 0;">
-                    <li><a href="home.php" style="color: #fff; text-decoration: none;">Home</a></li>
-                    <li><a href="about.php" style="color: #fff; text-decoration: none;">About</a></li>
-                    <li><a href="contact.php" style="color: #fff; text-decoration: none;">Contact</a></li>
-                    <li><a href="terms.php" style="color: #fff; text-decoration: none;">Terms of Service</a></li>
-                </ul>
-            </div>
-
-            <!-- Social Media Section -->
-            <div>
-                <h5>Follow Us</h5>
-                <ul style="list-style-type: none; padding: 0;">
-                    <li><a href="#" style="color: #fff; text-decoration: none;">Facebook</a></li>
-                    <li><a href="#" style="color: #fff; text-decoration: none;">Twitter</a></li>
-                    <li><a href="#" style="color: #fff; text-decoration: none;">Instagram</a></li>
-                    <li><a href="#" style="color: #fff; text-decoration: none;">LinkedIn</a></li>
-                </ul>
+            <!-- Copyright Section -->
+            <div style="border-top: 1px solid #555; padding-top: 15px; font-size: 14px;">
+                <p>&copy; <?php echo date("Y"); ?> Your Company Name. All rights reserved.</p>
             </div>
         </div>
-
-        <!-- Copyright Section -->
-        <div style="border-top: 1px solid #555; padding-top: 15px; font-size: 14px;">
-            <p>&copy; <?php echo date("Y"); ?> Your Company Name. All rights reserved.</p>
-        </div>
-    </div>
-</footer>
+    </footer>
 
 
 
@@ -617,187 +716,185 @@ function togglePostForm() {
 
 
 
-<script>
-    // Ensure the DOM is fully loaded before attaching event listeners
-    document.addEventListener("DOMContentLoaded", function() {
-        // Handle form submission
-        document.getElementById('submissionForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
+    <script>
+        // Ensure the DOM is fully loaded before attaching event listeners
+        document.addEventListener("DOMContentLoaded", function() {
+            // Handle form submission
+            document.getElementById('submissionForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent the default form submission
 
-            const form = new FormData(this); // Get form data
+                const form = new FormData(this); // Get form data
 
-            // Send the data via AJAX to submit_submissionas.php
-            fetch('submit_submissionas.php', {
-                method: 'POST',
-                body: form
-            })
-            .then(response => response.json()) // Parse the JSON response
-            .then(data => {
-                if (data.status === 'success') {
-                    // SweetAlert for successful submission
-                    Swal.fire({
-                        title: 'Submission Successful!',
-                        text: data.message,
-                        icon: 'success',
-                        confirmButtonText: 'Okay'
-                    }).then(() => {
-                        // Reload the page after successful submission
-                        location.reload(); // This will refresh the page
+                // Send the data via AJAX to submit_submissionas.php
+                fetch('submit_submissionas.php', {
+                        method: 'POST',
+                        body: form
+                    })
+                    .then(response => response.json()) // Parse the JSON response
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // SweetAlert for successful submission
+                            Swal.fire({
+                                title: 'Submission Successful!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonText: 'Okay'
+                            }).then(() => {
+                                // Reload the page after successful submission
+                                location.reload(); // This will refresh the page
+                            });
+                        } else {
+                            // SweetAlert for error if submission fails
+                            Swal.fire({
+                                title: 'Error!',
+                                text: data.message,
+                                icon: 'error',
+                                confirmButtonText: 'Try Again'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        // SweetAlert for any AJAX error
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'There was an issue with your submission. Please try again.',
+                            icon: 'error',
+                            confirmButtonText: 'Try Again'
+                        });
                     });
-                } else {
-                    // SweetAlert for error if submission fails
-                    Swal.fire({
-                        title: 'Error!',
-                        text: data.message,
-                        icon: 'error',
-                        confirmButtonText: 'Try Again'
-                    });
-                }
-            })
-            .catch(error => {
-                // SweetAlert for any AJAX error
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'There was an issue with your submission. Please try again.',
-                    icon: 'error',
-                    confirmButtonText: 'Try Again'
-                });
             });
         });
-    });
-</script>
+    </script>
 
-<!-- progress bar  -->
-<script>
-// Get student ID and course ID (replace with dynamic PHP variables)
-const studentId = <?php echo $student_id; ?>;
-const courseId = <?php echo $course_id; ?>;
-// Show PDF content in modal
-// Function to view the PDF in the modal
-function viewPDF(pdfFile, title) {
-    if (!pdfFile) {
-        alert("PDF file not found.");
-        return;
-    }
+    <!-- progress bar  -->
+    <script>
+        // Get student ID and course ID (replace with dynamic PHP variables)
+        const studentId = <?php echo $student_id; ?>;
+        const courseId = <?php echo $course_id; ?>;
+        // Show PDF content in modal
+        // Function to view the PDF in the modal
+        function viewPDF(pdfFile, title) {
+            if (!pdfFile) {
+                alert("PDF file not found.");
+                return;
+            }
 
-    // Set the title of the PDF modal
-    document.getElementById('pdfTitle').textContent = title;
-    // Set the source for the iframe to load the PDF
-    document.getElementById('pdfViewer').src = pdfFile;
+            // Set the title of the PDF modal
+            document.getElementById('pdfTitle').textContent = title;
+            // Set the source for the iframe to load the PDF
+            document.getElementById('pdfViewer').src = pdfFile;
 
-    // Display the modal
-    document.getElementById('pdfModal').style.display = 'flex';
-}
-
-// Function to close the modals (PDF and video)
-function closeModal() {
-    // Close both PDF and video modals
-    document.getElementById('pdfModal').style.display = 'none';
-    document.getElementById('videoModal').style.display = 'none';
-
-    // Reset the iframe source to stop loading the PDF
-    document.getElementById('pdfViewer').src = '';
-    
-    // Reset the video player (if applicable)
-    document.getElementById('videoPlayer').pause();
-    document.getElementById('videoPlayer').currentTime = 0;
-}
-// Show video content in modal
-function showContent(title, videoFile) {
-    if (!videoFile) {
-        alert("Video file not found.");
-        return;
-    }
-
-    document.getElementById('videoTitle').textContent = title;
-    document.getElementById('videoSource').src = videoFile;
-    document.getElementById('videoPlayer').load();
-    document.getElementById('videoModal').style.display = 'flex';
-}
-
-
-
-// Initialize the completed modules from localStorage (if any)
-document.addEventListener('DOMContentLoaded', function() {
-    const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
-
-    // Loop through all buttons and set their text accordingly
-    const buttons = document.querySelectorAll('.completion-button');
-    buttons.forEach(button => {
-        const moduleId = button.getAttribute('data-module-id');
-        if (completedModules.includes(moduleId)) {
-            button.textContent = 'Completed';  // Change button text to 'Completed'
+            // Display the modal
+            document.getElementById('pdfModal').style.display = 'flex';
         }
-    });
 
-    updateProgressBar();
-    updateProgressBarModules();
-});
+        // Function to close the modals (PDF and video)
+        function closeModal() {
+            // Close both PDF and video modals
+            document.getElementById('pdfModal').style.display = 'none';
+            document.getElementById('videoModal').style.display = 'none';
 
-// Mark module as completed when button is clicked
-function markCompleted(event) {
-    const button = event.target;
-    const moduleId = button.getAttribute('data-module-id');
+            // Reset the iframe source to stop loading the PDF
+            document.getElementById('pdfViewer').src = '';
 
-    // Get the current list of completed modules from localStorage
-    let completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
-
-    // If the button says 'Mark as Completed', mark it and update the button text
-    if (button.textContent === 'Mark as Completed') {
-        completedModules.push(moduleId);
-        button.textContent = 'Completed';
-    } else {
-        completedModules = completedModules.filter(id => id !== moduleId);
-        button.textContent = 'Mark as Completed';
-    }
-
-    // Save the updated list of completed modules to localStorage
-    localStorage.setItem(`completedModules_${studentId}_${courseId}`, JSON.stringify(completedModules));
-    
-    // Update progress bar
-    updateProgressBar();
-    updateProgressBarModules();
-
-    // Save progress to the database (AJAX request)
-    saveProgressToDatabase(moduleId, completedModules);
-}
-
-// Update progress bar (Video)
-function updateProgressBar() {
-    const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
-    const totalModules = document.querySelectorAll('.module').length;
-    const progress = (completedModules.length / totalModules) * 100;
-    document.getElementById('progressBar').style.width = progress + '%';
-}
-
-// Update progress bar (PDF)
-function updateProgressBarModules() {
-    const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
-    const totalModules = document.querySelectorAll('.module').length;
-    const progress = (completedModules.length / totalModules) * 100;
-    document.getElementById('progressBarModules').style.width = progress + '%';
-}
-
-// Save progress to the database using AJAX
-function saveProgressToDatabase(moduleId, completedModules) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'save_progress.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            // Handle the response (e.g., display a success message)
-            console.log('Progress saved successfully!');
+            // Reset the video player (if applicable)
+            document.getElementById('videoPlayer').pause();
+            document.getElementById('videoPlayer').currentTime = 0;
         }
-    };
-    xhr.send('student_id=' + studentId + '&course_id=' + courseId + '&completed_modules=' + JSON.stringify(completedModules));
-}
+        // Show video content in modal
+        function showContent(title, videoFile) {
+            if (!videoFile) {
+                alert("Video file not found.");
+                return;
+            }
+
+            document.getElementById('videoTitle').textContent = title;
+            document.getElementById('videoSource').src = videoFile;
+            document.getElementById('videoPlayer').load();
+            document.getElementById('videoModal').style.display = 'flex';
+        }
 
 
-</script>
+
+        // Initialize the completed modules from localStorage (if any)
+        document.addEventListener('DOMContentLoaded', function() {
+            const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
+
+            // Loop through all buttons and set their text accordingly
+            const buttons = document.querySelectorAll('.completion-button');
+            buttons.forEach(button => {
+                const moduleId = button.getAttribute('data-module-id');
+                if (completedModules.includes(moduleId)) {
+                    button.textContent = 'Completed'; // Change button text to 'Completed'
+                }
+            });
+
+            updateProgressBar();
+            updateProgressBarModules();
+        });
+
+        // Mark module as completed when button is clicked
+        function markCompleted(event) {
+            const button = event.target;
+            const moduleId = button.getAttribute('data-module-id');
+
+            // Get the current list of completed modules from localStorage
+            let completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
+
+            // If the button says 'Mark as Completed', mark it and update the button text
+            if (button.textContent === 'Mark as Completed') {
+                completedModules.push(moduleId);
+                button.textContent = 'Completed';
+            } else {
+                completedModules = completedModules.filter(id => id !== moduleId);
+                button.textContent = 'Mark as Completed';
+            }
+
+            // Save the updated list of completed modules to localStorage
+            localStorage.setItem(`completedModules_${studentId}_${courseId}`, JSON.stringify(completedModules));
+
+            // Update progress bar
+            updateProgressBar();
+            updateProgressBarModules();
+
+            // Save progress to the database (AJAX request)
+            saveProgressToDatabase(moduleId, completedModules);
+        }
+
+        // Update progress bar (Video)
+        function updateProgressBar() {
+            const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
+            const totalModules = document.querySelectorAll('.module').length;
+            const progress = (completedModules.length / totalModules) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // Update progress bar (PDF)
+        function updateProgressBarModules() {
+            const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
+            const totalModules = document.querySelectorAll('.module').length;
+            const progress = (completedModules.length / totalModules) * 100;
+            document.getElementById('progressBarModules').style.width = progress + '%';
+        }
+
+        // Save progress to the database using AJAX
+        function saveProgressToDatabase(moduleId, completedModules) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'save_progress.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // Handle the response (e.g., display a success message)
+                    console.log('Progress saved successfully!');
+                }
+            };
+            xhr.send('student_id=' + studentId + '&course_id=' + courseId + '&completed_modules=' + JSON.stringify(completedModules));
+        }
+    </script>
 
 
 
-<script>
+    <script>
         function showContent(title, type, file) {
             const modal = document.getElementById('modal');
             const modalContent = document.getElementById('modal-content');
@@ -838,14 +935,15 @@ function saveProgressToDatabase(moduleId, completedModules) {
         }
 
         function togglePostForm() {
-    const postForm = document.getElementById('postForm');
-    if (postForm.style.display === 'none') {
-        postForm.style.display = 'block'; // Show the form
-    } else {
-        postForm.style.display = 'none'; // Hide the form
-    }
-}
-function showContent(title, type, file) {
+            const postForm = document.getElementById('postForm');
+            if (postForm.style.display === 'none') {
+                postForm.style.display = 'block'; // Show the form
+            } else {
+                postForm.style.display = 'none'; // Hide the form
+            }
+        }
+
+        function showContent(title, type, file) {
             const modal = document.getElementById('modal');
             const modalContent = document.getElementById('modal-content');
             const modalTitle = document.getElementById('modal-title');
@@ -875,62 +973,25 @@ function showContent(title, type, file) {
     </script>
 
 
-<!-- Display E-Certificates -->
-<div id="certificateTab" class="tab-content" style="display: none;">
-    <h3 style="text-align: center; font-family: Arial, sans-serif; margin-bottom: 20px;">E-Certificates</h3>
-    <?php
-    // Fetch e-certificates for the current course and student
-    $certificates = $pdo->prepare("
-        SELECT * 
-        FROM e_certificates 
-        WHERE course_id = ? AND student_id = ?
-    ");
-    $certificates->execute([$course_id, $student_id]);
-    $certificates = $certificates->fetchAll(PDO::FETCH_ASSOC);
-
-    if (count($certificates) > 0): ?>
-        <div class="certificates-container">
-            <?php foreach ($certificates as $certificate): ?>
-                <div class="certificate-display">
-                    <?php
-                    $filePath = htmlspecialchars($certificate['certificate_path']);
-                    $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
-
-                    // Display certificates based on file type
-                    if (in_array($fileExtension, ['jpg', 'jpeg', 'png'])): ?>
-                        <img src="<?php echo $filePath; ?>" alt="Certificate" class="certificate-image">
-                    <?php elseif ($fileExtension === 'pdf'): ?>
-                        <iframe src="<?php echo $filePath; ?>" class="certificate-pdf"></iframe>
-                    <?php else: ?>
-                        <p>Unsupported file type.</p>
-                    <?php endif; ?>
-                    <p class="certificate-date">Uploaded on: <?php echo htmlspecialchars($certificate['uploaded_at']); ?></p>
-                    <!-- Download Button -->
-                    <a href="<?php echo $filePath; ?>" download class="download-button">Download Certificate</a>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    <?php else: ?>
-        <p style="text-align: center; font-size: 16px; color: #555;">No certificates available for this course.</p>
-    <?php endif; ?>
-</div>
 
 
-<!-- Include modal script and other functionalities -->
-<script>
-    function closeModal() {
-        document.getElementById('modal').style.display = 'none';
-    }
-    
-    function highlightTab(event) {
-        // Remove the 'active' class from all tabs
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => tab.classList.remove('active'));
 
-        // Add the 'active' class to the clicked tab
-        event.currentTarget.classList.add('active');
-    }
-</script>
+    <!-- Include modal script and other functionalities -->
+    <script>
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function highlightTab(event) {
+            // Remove the 'active' class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Add the 'active' class to the clicked tab
+            event.currentTarget.classList.add('active');
+        }
+    </script>
 
 </body>
+
 </html>

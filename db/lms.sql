@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 19, 2024 at 04:44 PM
+-- Generation Time: Nov 24, 2024 at 09:10 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -40,11 +40,7 @@ CREATE TABLE `admins` (
 --
 
 INSERT INTO `admins` (`id`, `username`, `email`, `password`, `created_at`) VALUES
-(1, 'teacher1', 'teacher1@example.com', '$2y$10$.l9rolRxzjHaGK84Fh6IhuzweLhDcg0D1f3nBuQzx4LTzPEWJnsnm', '2024-10-16 14:48:24'),
-(2, 'admin', 'admin@gmail.com', '$2y$10$TmnlqDQVoJb3H7BA0uza7O3iwA9WEuKU8IixgWZRDLuIy.ue2rzA2', '2024-11-06 12:18:08'),
-(3, 'ADMIN2', 'admin@gmail.com', '$2y$10$Y.WU5vByhSCwvwswGwjFZ.CDM3cScaU.PHUamRK72BasQNCaeX0pG', '2024-11-10 03:35:54'),
-(4, 'kenshin', 'kenshin@gmail.com', '$2y$10$IKnm.xZH8yVe.mhjHxPjGuOox3cDNHptL5/zEUq3aIbHrOYvhsaGK', '2024-11-12 16:17:57'),
-(5, 'kenken', 'kenken@gmail.com', '$2y$10$AwPY8QMNVkt86QPbEsAiN.dVeod73Z9hf6uGZI8x6Oh5tgZqPnRJK', '2024-11-12 16:18:24');
+(6, 'test', 'francistengteng10@gmail.com', '$2y$10$g4NwO3QlSVnN5Z2XWIxtOugigQ80FBCk/W1aYjf3mQp4O00cNTXCe', '2024-11-23 23:00:03');
 
 -- --------------------------------------------------------
 
@@ -69,7 +65,6 @@ CREATE TABLE `assessments` (
 
 CREATE TABLE `assessment_feedback` (
   `id` int(11) NOT NULL,
-  `submission_id` int(11) NOT NULL,
   `assessment_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `user_type` enum('instructor','student') NOT NULL,
@@ -173,7 +168,29 @@ CREATE TABLE `enrollments` (
 --
 
 INSERT INTO `enrollments` (`id`, `student_id`, `course_id`) VALUES
-(93, 4, 19);
+(94, 5, 19);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `e_certificates`
+--
+
+CREATE TABLE `e_certificates` (
+  `id` int(11) NOT NULL,
+  `course_id` int(11) NOT NULL,
+  `student_id` int(11) NOT NULL,
+  `certificate_path` varchar(255) NOT NULL,
+  `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `e_certificates`
+--
+
+INSERT INTO `e_certificates` (`id`, `course_id`, `student_id`, `certificate_path`, `uploaded_at`) VALUES
+(1, 19, 5, 'certificates/Bottega Bernard New Website Instructions.pdf', '2024-11-24 05:07:04'),
+(2, 19, 5, 'certificates/Bottega Bernard New Website Instructions.pdf', '2024-11-24 05:12:04');
 
 -- --------------------------------------------------------
 
@@ -211,7 +228,7 @@ CREATE TABLE `instructors` (
 --
 
 INSERT INTO `instructors` (`id`, `name`, `email`, `password`, `created_at`, `profile_picture`, `gender`) VALUES
-(25, 'Niana Guerero', 'niana@gmail.com', '$2y$10$XOx3jFCeAoUNMcrE3NCVOed4l.zpO6dkXfZh2wSQZmPYgbUMtegm.', '2024-11-18 17:11:42', 'uploads/profile_picture/467025826_596145056089198_369990306562908076_n.jpg', 'female');
+(25, 'test', 'test@gmail.com', '$2y$10$n27Fc5VZcsNUQ.zhHuGsZeF6Zh5wRWMLYNN54U5rv0x/C9aSA5yGu', '2024-11-23 23:01:37', '', 'male');
 
 -- --------------------------------------------------------
 
@@ -234,7 +251,29 @@ CREATE TABLE `modules` (
 
 INSERT INTO `modules` (`id`, `course_id`, `title`, `module_file`, `video_file`, `created_at`) VALUES
 (11, 19, 'module 1.1 introduction', 'uploads/ED536788.pdf', NULL, '2024-11-19 15:35:08'),
-(12, 19, 'module 1.1 introductions videos', NULL, 'uploads/video1.mp4', '2024-11-19 15:35:08');
+(12, 19, 'module 1.1 introductions videos', NULL, 'uploads/video1.mp4', '2024-11-19 15:35:08'),
+(13, 19, 'Test', 'uploads/Bottega Bernard New Website Instructions.pdf', NULL, '2024-11-23 23:57:02');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `module_completion`
+--
+
+CREATE TABLE `module_completion` (
+  `id` int(11) NOT NULL,
+  `student_id` int(11) NOT NULL,
+  `module_id` int(11) NOT NULL,
+  `is_done` tinyint(4) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `module_completion`
+--
+
+INSERT INTO `module_completion` (`id`, `student_id`, `module_id`, `is_done`) VALUES
+(1, 5, 11, 1),
+(4, 5, 13, 1);
 
 -- --------------------------------------------------------
 
@@ -291,11 +330,17 @@ CREATE TABLE `students` (
 --
 
 INSERT INTO `students` (`id`, `username`, `email`, `password`, `created_at`, `name`, `code`, `approved`, `reset_token`, `profile_pic`, `gender`) VALUES
-(4, 'Garry Zaldy Deguzman', 'Garryzaldy@gmail.com', '$2y$10$FueJE4Ysy3oRtqzfvdaWz.w7ywyZbkDooPFDFRW14OgrjXDS2rllG', '2024-11-19 15:39:43', 'Garry Zaldy Deguzman', 'HBA690', 1, '', NULL, NULL);
+(5, 'test', 'cabusasfg779@gmail.com', '$2y$10$8asVryKJ8.rfr8AxJ.5S2OvMz2/MP8edsyCyFyrbO1KqhQIog/FwS', '2024-11-23 23:00:50', 'Francis Cabusas', 'XCH606', 1, '', NULL, NULL);
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `admins`
+--
+ALTER TABLE `admins`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `assessments`
@@ -353,6 +398,14 @@ ALTER TABLE `enrollments`
   ADD KEY `course_id` (`course_id`);
 
 --
+-- Indexes for table `e_certificates`
+--
+ALTER TABLE `e_certificates`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `course_id` (`course_id`),
+  ADD KEY `student_id` (`student_id`);
+
+--
 -- Indexes for table `feedback`
 --
 ALTER TABLE `feedback`
@@ -373,6 +426,14 @@ ALTER TABLE `instructors`
 ALTER TABLE `modules`
   ADD PRIMARY KEY (`id`),
   ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `module_completion`
+--
+ALTER TABLE `module_completion`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `student_id` (`student_id`),
+  ADD KEY `module_id` (`module_id`);
 
 --
 -- Indexes for table `posts`
@@ -399,22 +460,28 @@ ALTER TABLE `students`
 --
 
 --
+-- AUTO_INCREMENT for table `admins`
+--
+ALTER TABLE `admins`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT for table `assessments`
 --
 ALTER TABLE `assessments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `assessment_feedback`
 --
 ALTER TABLE `assessment_feedback`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `assessment_submissions`
 --
 ALTER TABLE `assessment_submissions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `comments`
@@ -438,13 +505,19 @@ ALTER TABLE `completed_modules`
 -- AUTO_INCREMENT for table `courses`
 --
 ALTER TABLE `courses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `enrollments`
 --
 ALTER TABLE `enrollments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
+
+--
+-- AUTO_INCREMENT for table `e_certificates`
+--
+ALTER TABLE `e_certificates`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `feedback`
@@ -456,13 +529,19 @@ ALTER TABLE `feedback`
 -- AUTO_INCREMENT for table `instructors`
 --
 ALTER TABLE `instructors`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `modules`
 --
 ALTER TABLE `modules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT for table `module_completion`
+--
+ALTER TABLE `module_completion`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `posts`
@@ -474,7 +553,25 @@ ALTER TABLE `posts`
 -- AUTO_INCREMENT for table `students`
 --
 ALTER TABLE `students`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `e_certificates`
+--
+ALTER TABLE `e_certificates`
+  ADD CONSTRAINT `e_certificates_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `e_certificates_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `module_completion`
+--
+ALTER TABLE `module_completion`
+  ADD CONSTRAINT `module_completion_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `module_completion_ibfk_2` FOREIGN KEY (`module_id`) REFERENCES `modules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -72,7 +72,6 @@ $courses = $pdo->query("
            (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) AS student_count
     FROM courses c
 ")->fetchAll(PDO::FETCH_ASSOC);
-
 $instructors = $pdo->query("SELECT * FROM instructors")->fetchAll(PDO::FETCH_ASSOC);
 $students = $pdo->query("SELECT * FROM students")->fetchAll(PDO::FETCH_ASSOC);
 $total_courses = count($courses);
@@ -158,6 +157,50 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['select_course'])) {
     $stmt->execute([$selected_course_id]);
     $assigned_instructors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+function getStudentProgress($student_id, $course_id, $pdo)
+{
+    $query = "SELECT m.id AS module_id, mc.is_done 
+              FROM modules m
+              LEFT JOIN module_completion mc ON m.id = mc.module_id AND mc.student_id = :student_id
+              WHERE m.course_id = :course_id";
+    $stmt = $pdo->prepare($query);
+    $stmt->bindParam(':student_id', $student_id, PDO::PARAM_INT);
+    $stmt->bindParam(':course_id', $course_id, PDO::PARAM_INT);
+    $stmt->execute();
+    $modules = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $totalModules = count($modules);
+    $completedModules = 0;
+    foreach ($modules as $module) {
+        if ($module['is_done'] == 1) {
+            $completedModules++;
+        }
+    }
+    $progress = $totalModules > 0 ? ($completedModules / $totalModules) * 100 : 0;
+    return round($progress, 2);
+}
+
+// if (isset($_POST['view_students'])) {
+//     $course_id = $_POST['course_id'];
+//     $students = $pdo->prepare("SELECT * FROM enrollments JOIN students ON students.id = enrollments.student_id WHERE course_id = ?");
+//     $students->execute([$course_id]);
+//     $students = $students->fetchAll(PDO::FETCH_ASSOC);
+//     $ongoing_students = [];
+//     $waiting_students = [];
+//     $completed_students = [];
+
+//     foreach ($students as $student) {
+//         $progress = getStudentProgress($student['id'], $course_id, $pdo);
+
+//         if ($progress == 0) {
+//             $waiting_students[] = $student;
+//         } elseif ($progress == 100) {
+//             $completed_students[] = $student;
+//         } else {
+//             $ongoing_students[] = $student;
+//         }
+//     }
+// }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -212,12 +255,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['select_course'])) {
                 <nav>
                     <ul>
                         <li><a href="#" class="tab-link" data-tab="manage-courses">Manage Courses</a></li>
-                        <li><a href="#" class="tab-link" data-tab="create-course">Create Course</a></li>
-                        <li><a href="#" class="tab-link" data-tab="instructors">Instructors</a></li>
+                        <li><a href="#" class="tab-link" data-tab="add-new-instructors">Add New Instructors</a></li>
                         <li><a href="#" class="tab-link" data-tab="students">Students</a></li>
-                        <li><a href="#" class="tab-link" data-tab="register-instructor">Register New Instructor</a></li>
                         <li><a href="#" class="tab-link" data-tab="upload-certificates">Upload E-Certificates</a></li>
                         <li><a href="#" class="tab-link" data-tab="enrolled-students">Enrolled Students List Courses</a>
+                        </li>
+                        <li><a href="#" class="tab-link" data-tab="view-students">View Students</a>
                         </li>
                     </ul>
                 </nav>
@@ -239,8 +282,84 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['select_course'])) {
                         <label for="certificate_file">Upload Certificate:</label>
                         <input type="file" name="certificate_file" id="certificate_file" accept=".pdf,.jpg,.png"
                             required>
-                        <button type="submit" name="upload_certificate">Upload</button>
+                        <button type="submit" name="upload_certificate" class="btn-primary">Upload</button>
                     </form>
+                </section>
+                <section class="tab-content" id="view-students" style="display: none;">
+                    <form method="POST" action="" style="margin-bottom: 10px;">
+                        <select name="course_id">
+                            <?php
+                            $courses1 = $pdo->prepare("SELECT * FROM courses");
+                            $courses1->execute();
+                            $courses1 = $courses1->fetchAll(PDO::FETCH_ASSOC);
+                            foreach ($courses1 as $course) {
+                                var_dump($course);
+                                echo "<option value='{$course['id']}'>{$course['course_name']}</option>";
+                            }
+                            ?>
+                        </select>
+                        <button type="submit" name="view_students" class="btn-primary">View Students</button>
+                    </form>
+
+                    <?php
+                    if (isset($_POST['view_students'])) {
+                        $course_id = $_POST['course_id'];
+                        $students = $pdo->prepare("
+                            SELECT 
+                                students.*, 
+                                COUNT(e_certificates.id) AS certificate_count 
+                            FROM 
+                                enrollments 
+                            JOIN 
+                                students ON students.id = enrollments.student_id 
+                            LEFT JOIN 
+                                e_certificates ON e_certificates.student_id = students.id AND e_certificates.course_id = enrollments.course_id
+                            WHERE 
+                                enrollments.course_id = ? 
+                            GROUP BY 
+                                students.id
+                        ");
+                        $students->execute([$course_id]);
+                        $students = $students->fetchAll(PDO::FETCH_ASSOC);
+                    ?>
+
+                        <h3>Students List</h3>
+                        <table border="1">
+                            <thead>
+                                <tr>
+                                    <th>Learners</th>
+                                    <th>Email</th>
+                                    <th>Access Code</th>
+                                    <th>Total Certificate</th>
+                                    <th>Course Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($students as $student): ?>
+                                    <?php
+                                    $progress = getStudentProgress($student['id'], $course_id, $pdo);
+
+                                    if ($progress == 0) {
+                                        $status = 'Waiting';
+                                    } elseif ($progress == 100) {
+                                        $status = 'Completed';
+                                    } else {
+                                        $status = 'Ongoing';
+                                    }
+                                    ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($student['name']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['email']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['code']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['certificate_count']); ?></td>
+                                        <td><?php echo $status; ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php
+                    }
+                    ?>
                 </section>
                 <section id="content">
                     <div id="enrolled-students" class="tab-content">
@@ -256,7 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['select_course'])) {
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                            <button type="submit" name="select_course">View</button>
+                            <button type="submit" name="select_course" class="btn-primary">View</button>
                         </form>
 
                         <?php if ($selected_course_id): ?>
@@ -305,12 +424,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['select_course'])) {
                                         <?php echo htmlspecialchars($course['course_description']); ?>
                                     </div>
                                     <br><br>
-                                    <p>Enrolled Students: <?php echo $course['student_count']; ?></p><br><br>
+                                    <p>Enrolled Students: <?php echo htmlspecialchars($course['student_count']); ?></p><br><br>
                                 </div>
                                 <div class="course-actions">
-                                    <a class="edit-btn"
-                                        href="edit_course.php?course_id=<?php echo $course['id']; ?>">Edit</a>
-                                    <a class="delete-btn" href="?delete_course_id=<?php echo $course['id']; ?>"
+                                    <a class="btn-primary" href="edit_course.php?course_id=<?php echo $course['id']; ?>">Edit</a>
+                                    <a class="btn-secondary" href="?delete_course_id=<?php echo $course['id']; ?>"
                                         onclick="return confirm('Are you sure you want to delete this course?');">Delete</a>
                                 </div>
                             </div>
@@ -470,7 +588,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['select_course'])) {
                         </table>
                     </div>
                 </section>
-                <section id="register-instructor" class="tab-content">
+                <section id="add-new-instructors" class="tab-content">
                     <h2>Register New Instructor</h2>
                     <div class="form-container">
                         <form method="POST" enctype="multipart/form-data">
@@ -483,7 +601,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['select_course'])) {
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
                             </select>
-                            <button type="submit" name="register_instructor">Register Instructor</button>
+                            <button type="submit" name="register_instructor" class="btn-primary">Register Instructor</button>
                         </form>
                     </div>
                 </section>

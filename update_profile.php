@@ -1,5 +1,4 @@
 <?php
-// Include database connection
 require 'db_connection.php';
 session_start();
 
@@ -20,13 +19,10 @@ if (isset($_POST['update_picture']) && isset($_FILES['profile_picture'])) {
         $new_file_path = $upload_dir . basename($file_name);
 
         if (move_uploaded_file($file_tmp, $new_file_path)) {
-            // Update the profile picture in the database
             $update_picture = $pdo->prepare("UPDATE instructors SET profile_picture = ? WHERE id = ?");
             $update_picture->execute([$new_file_path, $instructor_id]);
-
-            // Redirect to the profile page with a success message
             $_SESSION['successMessage'] = "Profile picture updated successfully!";
-            header("Location: instructor.php"); // Adjust the location accordingly
+            header("Location: instructor.php"); 
             exit();
         } else {
             $_SESSION['errorMessage'] = "Failed to upload profile picture.";
@@ -36,6 +32,5 @@ if (isset($_POST['update_picture']) && isset($_FILES['profile_picture'])) {
     }
 }
 
-header("Location: instructor.php"); // Adjust the location accordingly
+header("Location: instructor.php");
 exit();
-?>

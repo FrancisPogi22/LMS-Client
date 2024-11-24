@@ -197,7 +197,7 @@ $enrolled_courses_result = $courses->fetchAll(PDO::FETCH_ASSOC);
          alt="Profile Image" class="profile-img" onclick="toggleForm()">
     
     <div class="profile-info">
-        <h1><?php echo htmlspecialchars($_SESSION['student_username']); ?></h1>
+        <h1><?php echo htmlspecialchars($_SESSION['student_name']); ?></h1>
         <p>Status: Registered Student</p>
     </div>
     

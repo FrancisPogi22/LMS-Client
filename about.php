@@ -120,22 +120,22 @@
             <h2>Meet Our Team</h2>
             <div class="team-member">
                 <img src="https://via.placeholder.com/150" alt="Team Member 1">
-                <h3>Garry Zaldy Deguzman</h3>
+                <h3>shintaro midorima</h3>
                 <p>CEO</p>
             </div>
             <div class="team-member">
                 <img src="https://via.placeholder.com/150" alt="Team Member 2">
-                <h3>John Smith</h3>
+                <h3>akashi seijuro</h3>
                 <p>CTO</p>
             </div>
             <div class="team-member">
                 <img src="https://via.placeholder.com/150" alt="Team Member 3">
-                <h3>Emily Johnson</h3>
+                <h3>kuroko tetsuya</h3>
                 <p>CMO</p>
             </div>
             <div class="team-member">
                 <img src="https://via.placeholder.com/150" alt="Team Member 4">
-                <h3>Michael Brown</h3>
+                <h3>taiga kagami</h3>
                 <p>CFO</p>
             </div>
         </div>

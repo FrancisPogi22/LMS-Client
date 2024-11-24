@@ -56,11 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_course'])) {
     // Update course details
     $update_stmt = $pdo->prepare("UPDATE courses SET course_name = ?, course_description = ? WHERE id = ?");
     $update_stmt->execute([$course_name, $course_description, $course_id]);
-    echo "<script>alert('Course updated successfully!');</script>";
 
     // Handle module and video file uploads
     $target_dir = "uploads/";
-  
+
     // Process each module file
     if (isset($_FILES['module_file']) && !empty($_FILES['module_file']['name'][0])) {
         foreach ($_FILES['module_file']['name'] as $key => $filename) {
@@ -86,7 +85,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_course'])) {
             $insert_stmt->execute([$course_id, $target_file, $video_title]);
         }
     }
+
+    // Redirect with success query parameter
+    header("Location: edit_course.php?course_id=$course_id&success=true");
+    exit();
 }
+
+
 
 // Update module titles and files
 if (isset($_POST['update_title'])) {
@@ -152,6 +157,8 @@ $uploaded_modules = $modules->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- Add SweetAlert -->
+
     <title>Edit Course</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
@@ -274,6 +281,20 @@ $uploaded_modules = $modules->fetchAll(PDO::FETCH_ASSOC);
             </form>
         </div>
     </div>
+    <script>
+    // Check if 'success' parameter is in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('success')) {
+        // Display SweetAlert success modal
+        Swal.fire({
+            title: 'Success!',
+            text: 'Course updated successfully!',
+            icon: 'success',
+            confirmButtonText: 'OK'
+        });
+    }
+</script>
+
 
     <!-- Modal structure for uploaded modules -->
 <!-- Modal structure for uploaded modules -->
@@ -471,6 +492,7 @@ $uploaded_modules = $modules->fetchAll(PDO::FETCH_ASSOC);
                 studentsModal.style.display = "none";
             }
         }
+        
     </script>
 </body>
 </html>
