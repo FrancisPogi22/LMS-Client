@@ -161,7 +161,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['select_course'])) {
 function getStudentProgress($student_id, $course_id, $pdo)
 {
     try {
-        // Prepare the SQL query with placeholders
         $stmt = $pdo->prepare("
             SELECT
                 m.id AS module_id,

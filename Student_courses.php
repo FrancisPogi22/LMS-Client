@@ -123,7 +123,6 @@ $courses = $courses->fetchAll(PDO::FETCH_ASSOC);
         </div>
         <nav>
             <ul>
-                <li><a href="show_courses.php">Courses</a></li>
                 <li><a href="about.php">ABOUT US</a></li>
                 <?php
                 // Check if the user is logged in

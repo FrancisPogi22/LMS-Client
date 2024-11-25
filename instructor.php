@@ -78,6 +78,36 @@ if (isset($_SESSION['errorMessage'])) {
     unset($_SESSION['errorMessage']);
 }
 
+function getStudentProgress($student_id, $course_id, $pdo)
+{
+    try {
+        $stmt = $pdo->prepare("
+            SELECT
+                m.id AS module_id,
+                CASE WHEN cm.module_id IS NOT NULL THEN 1 ELSE 0 END AS is_completed
+            FROM
+                modules m
+            LEFT JOIN completed_modules cm 
+                ON m.id = cm.module_id AND cm.student_id = :student_id
+            WHERE
+                m.course_id = :course_id
+        ");
+        $stmt->execute([
+            'student_id' => $student_id,
+            'course_id' => $course_id
+        ]);
+        $modules = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $totalModules = count($modules);
+        $completedCount = array_reduce($modules, function ($count, $module) {
+            return $count + ($module['is_completed'] == 1 ? 1 : 0);
+        }, 0);
+
+        return ($totalModules > 0) ? round(($completedCount / $totalModules) * 100, 2) : 0;
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
+        return 0;
+    }
+}
 
 ?>
 
@@ -279,7 +309,7 @@ if (isset($_SESSION['errorMessage'])) {
                         <p>No courses available.</p>
                     <?php endif; ?>
                 </section>
-             
+
                 <section id="progress" class="tab-content hidden">
                     <?php
                     foreach ($courses as $course):
@@ -306,6 +336,7 @@ if (isset($_SESSION['errorMessage'])) {
                                             <td><?php echo htmlspecialchars($student['name']); ?></td>
                                             <td>
                                                 <?php
+
                                                 $progress = getStudentProgress($student['student_id'], $course['id'], $pdo);
                                                 ?>
                                                 <div class="progress-container">
@@ -321,29 +352,6 @@ if (isset($_SESSION['errorMessage'])) {
                             <p>No students enrolled in <?php echo htmlspecialchars($course['course_name']); ?>.</p>
                         <?php endif; ?>
                     <?php endforeach; ?>
-                    <?php
-                    function getStudentProgress($student_id, $course_id, $pdo)
-                    {
-                        $query = "SELECT m.id AS module_id, mc.is_done 
-                                           FROM modules m
-                                           LEFT JOIN module_completion mc ON m.id = mc.module_id AND mc.student_id = :student_id
-                                           WHERE m.course_id = :course_id";
-                        $stmt = $pdo->prepare($query);
-                        $stmt->bindParam(':student_id', $student_id, PDO::PARAM_INT);
-                        $stmt->bindParam(':course_id', $course_id, PDO::PARAM_INT);
-                        $stmt->execute();
-                        $modules = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                        $totalModules = count($modules);
-                        $completedModules = 0;
-                        foreach ($modules as $module) {
-                            if ($module['is_done'] == 1) {
-                                $completedModules++;
-                            }
-                        }
-                        $progress = $totalModules > 0 ? ($completedModules / $totalModules) * 100 : 0;
-                        return round($progress, 2);
-                    }
-                    ?>
                     </tbody>
                 </section>
                 <section id="evaluate" class="tab-content hidden">
