@@ -123,10 +123,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
     }
 
     // Refresh the page to update progress bar and module completion status
-    header("Location: course_details.php?course_id=$course_id");
+    header("Location: courses.php?course_id=$course_id");
     exit;
 }
 
+function getStudentProgress($student_id, $course_id, $pdo, $action)
+{
+    try {
+        $fileColumn = ($action === "video") ? "video_file" : "module_file";
+        $query = $pdo->prepare("
+            SELECT
+                m.id AS module_id,
+                CASE WHEN cm.module_id IS NOT NULL THEN 1 ELSE 0 END AS is_completed
+            FROM
+                modules m
+            LEFT JOIN completed_modules cm 
+                ON m.id = cm.module_id AND cm.student_id = :studentId
+            WHERE
+                m.course_id = :courseId
+                AND m.$fileColumn IS NOT NULL
+                AND m.$fileColumn != ''
+        ");
+
+        $query->execute(['studentId' => $student_id, 'courseId' => $course_id]);
+        $modules = $query->fetchAll(PDO::FETCH_ASSOC);
+        $totalModules = count($modules);
+        $completedCount = array_reduce($modules, function ($count, $module) {
+            return $count + ($module['is_completed'] == 1 ? 1 : 0);
+        }, 0);
+
+        return ($totalModules > 0) ? round(($completedCount / $totalModules) * 100, 2) : 0;
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
+        return 0;
+    }
+}
 
 ?>
 
@@ -140,6 +171,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
     <link rel="stylesheet" href="styles.css">
     <title><?php echo htmlspecialchars($course['course_name']); ?></title>
     <link rel="stylesheet" href="./css/courses.css">
+    <style>
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            position: relative;
+            height: 20px;
+            /* Set the height for the progress bar */
+        }
+
+        .progress {
+            height: 100%;
+            background-color: #4caf50;
+            /* Green color for progress */
+            border-radius: 8px;
+            transition: width 0.3s ease;
+            /* Smooth transition for width change */
+        }
+    </style>
     <link rel="stylesheet" href="./assets/theme.css">
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -234,9 +285,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
     <div id="modulesTab" class="tab-content">
         <!-- Course Progress Bar -->
         <div id="progressContainerModules" style="margin-top: 20px; width: 100%; margin-bottom: 20px;">
+            <?php
+            $progress = getStudentProgress($student_id, $course_id, $pdo, "module");
+            ?>
             <label for="progressBarModules" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
-            <div style="background-color: #f3f3f3; width: 100%; border-radius: 5px; overflow: hidden;">
-                <div id="progressBarModules" style="height: 15px; width: 0%; background-color: #4caf50;"></div>
+            <div style="background-color: #f3f3f3; width: 100%; border-radius: 5px; overflow: hidden;" class="progress-bar">
+                <div id="progressBar" class="progress" style="height: 15px;width: <?php echo $progress; ?>%; background-color: #4caf50;"></div>
             </div>
         </div>
 
@@ -253,10 +307,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
                                     <?php echo htmlspecialchars($module['title']); ?>
                                 </div><br>
                                 <button onclick="viewPDF('<?php echo htmlspecialchars($module['module_file']); ?>', '<?php echo htmlspecialchars($module['title']); ?>')" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">View Modules</button>
-                                <!-- Completion Button -->
-                                <button class="completion-button" data-module-id="<?php echo $module['id']; ?>" onclick="markCompleted(event)" style="padding: 5px 8px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 1600px;">
-                                    <?php echo in_array($module['id'], $completed_modules) ? 'Completed' : 'Mark as Completed'; ?>
-                                </button>
+                                <?php if (in_array($module['id'], $completed_modules)): ?>
+                                    <button class="completion-status" style="
+                                        padding: 5px 8px; 
+                                        background-color: #007bff; 
+                                        color: white; 
+                                        border: none; 
+                                        border-radius: 4px; 
+                                        cursor: not-allowed; 
+                                        font-size: 12px;"
+                                        disabled>
+                                        Completed
+                                    </button>
+                                <?php else: ?>
+                                    <form method="POST" style="display: inline;">
+                                        <input type="hidden" name="module_id" value="<?php echo htmlspecialchars($module['id']); ?>">
+                                        <button type="submit" name="mark_done" class="completion-button" style="
+                                            padding: 5px 8px; 
+                                            background-color: #007bff; 
+                                            color: white; 
+                                            border: none; 
+                                            border-radius: 4px; 
+                                            cursor: pointer; 
+                                            font-size: 12px;">
+                                            Mark as Complete
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -280,9 +357,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
     <div id="contentTab" class="tab-content">
         <!-- Progress Bar -->
         <div id="progressContainer" style="margin-top: 20px; width: 100%;">
+            <?php
+            $progress = getStudentProgress($student_id, $course_id, $pdo, "video");
+            ?>
             <label for="progressBar" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
-            <div style="background-color: #f3f3f3; width: 100%; border-radius: 5px; overflow: hidden;">
-                <div id="progressBar" style="height: 15px; width: 0%; background-color: #4caf50;"></div>
+            <div style="background-color: #f3f3f3; width: 100%; border-radius: 5px; overflow: hidden;" class="progress-bar">
+                <div id="progressBar" class="progress" style="height: 15px;width: <?php echo $progress; ?>%; background-color: #4caf50;"></div>
             </div>
         </div>
 
@@ -297,10 +377,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
                             <div class="module-box" style="border: 1px solid black; border-radius: 8px; padding: 10px; width: 100%; margin-bottom: 10px;">
                                 <div class="module-title" style="font-size: 14px; font-weight: bold; color: #333; flex: 1;"><?php echo htmlspecialchars($module['title']); ?></div><br>
                                 <button onclick="showContent('<?php echo htmlspecialchars($module['title']); ?>', '<?php echo htmlspecialchars($module['video_file']); ?>')" style="padding: 5px 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">View Video</button>
-                                <!-- Completion Button -->
-                                <button class="completion-button" data-module-id="<?php echo $module['id']; ?>" onclick="markCompleted(event)" style="padding: 5px 8px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 1600px;">
-                                    <?php echo in_array($module['id'], $completed_modules) ? 'Completed' : 'Mark as Completed'; ?>
-                                </button>
+                                <?php if (in_array($module['id'], $completed_modules)): ?>
+                                    <button class="completion-status" style="
+                                        padding: 5px 8px; 
+                                        background-color: #007bff; 
+                                        color: white; 
+                                        border: none; 
+                                        border-radius: 4px; 
+                                        cursor: not-allowed; 
+                                        font-size: 12px;"
+                                        disabled>
+                                        Completed
+                                    </button>
+                                <?php else: ?>
+                                    <form method="POST" style="display: inline;">
+                                        <input type="hidden" name="module_id" value="<?php echo htmlspecialchars($module['id']); ?>">
+                                        <button type="submit" name="mark_done" class="completion-button" style="
+                                            padding: 5px 8px; 
+                                            background-color: #007bff; 
+                                            color: white; 
+                                            border: none; 
+                                            border-radius: 4px; 
+                                            cursor: pointer; 
+                                            font-size: 12px;">
+                                            Mark as Complete
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -319,7 +422,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
                 Your browser does not support the video tag.
             </video>
         </div>
-    </div>
+    </div> <!-- progress bar  -->
+    <script>
+        // Get student ID and course ID (replace with dynamic PHP variables)
+        const studentId = <?php echo $student_id; ?>;
+        const courseId = <?php echo $course_id; ?>;
+        // Show PDF content in modal
+        // Function to view the PDF in the modal
+        function viewPDF(pdfFile, title) {
+            if (!pdfFile) {
+                alert("PDF file not found.");
+                return;
+            }
+
+            // Set the title of the PDF modal
+            document.getElementById('pdfTitle').textContent = title;
+            // Set the source for the iframe to load the PDF
+            document.getElementById('pdfViewer').src = pdfFile;
+
+            // Display the modal
+            document.getElementById('pdfModal').style.display = 'flex';
+        }
+
+        // Function to close the modals (PDF and video)
+        function closeModal() {
+            // Close both PDF and video modals
+            document.getElementById('pdfModal').style.display = 'none';
+            document.getElementById('videoModal').style.display = 'none';
+
+            // Reset the iframe source to stop loading the PDF
+            document.getElementById('pdfViewer').src = '';
+
+            // Reset the video player (if applicable)
+            document.getElementById('videoPlayer').pause();
+            document.getElementById('videoPlayer').currentTime = 0;
+        }
+        // Show video content in modal
+        function showContent(title, videoFile) {
+            if (!videoFile) {
+                alert("Video file not found.");
+                return;
+            }
+
+            document.getElementById('videoTitle').textContent = title;
+            document.getElementById('videoSource').src = videoFile;
+            document.getElementById('videoPlayer').load();
+            document.getElementById('videoModal').style.display = 'flex';
+        }
+    </script>
 
 
     <!-- Forum Tab -->
@@ -817,21 +967,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
 
 
         // Initialize the completed modules from localStorage (if any)
-        document.addEventListener('DOMContentLoaded', function() {
-            const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
 
-            // Loop through all buttons and set their text accordingly
-            const buttons = document.querySelectorAll('.completion-button');
-            buttons.forEach(button => {
-                const moduleId = button.getAttribute('data-module-id');
-                if (completedModules.includes(moduleId)) {
-                    button.textContent = 'Completed'; // Change button text to 'Completed'
-                }
-            });
+        //     const buttons = document.querySelectorAll('.completion-button');
+        //     buttons.forEach(button => {
+        //         const moduleId = button.getAttribute('data-module-id');
+        //         if (completedModules.includes(moduleId)) {
+        //             button.textContent = 'Completed'; // Change button text to 'Completed'
+        //         }
+        //     });
 
-            updateProgressBar();
-            updateProgressBarModules();
-        });
+        //     updateProgressBar();
+        //     updateProgressBarModules();
+        // });
 
         // Mark module as completed when button is clicked
         function markCompleted(event) {

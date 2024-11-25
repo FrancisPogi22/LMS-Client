@@ -264,10 +264,10 @@ if (isset($_SESSION['errorMessage'])) {
                 </section>
                 <section class="tabs">
                     <button class="active" onclick="showTabContent('assigned-course', event)">ASSIGNED COURSE</button>
-                    <button onclick="showTabContent('my-learners', event)">MY LEARNERS</button>
+                    <button onclick="showTabContent('progress', event)">MY LEARNERS</button>
                     <button onclick="showTabContent('evaluate', event)">EVALUATE</button>
                 </section>
-                <section id="assigned-course" class="tab-content hidden">
+                <section id="assigned-course" class="tab-content ">
                     <?php if (count($courses) > 0): ?>
                         <?php foreach ($courses as $course): ?>
                             <div class="course">
@@ -279,116 +279,71 @@ if (isset($_SESSION['errorMessage'])) {
                         <p>No courses available.</p>
                     <?php endif; ?>
                 </section>
-                <section id="my-learners" class="tab-content hidden">
-                    <h3>My Learners</h3>
-                    <input type="text" id="studentSearch" onkeyup="searchStudents()" placeholder="Search students by name..." class="search-bar">
-                    <?php if (count($courses) > 0): ?>
-                        <?php foreach ($courses as $course): ?>
-                            <h4><?php echo htmlspecialchars($course['course_name']); ?></h4>
-                            <?php if (isset($students_by_course[$course['id']])): ?>
-                                <table class="student-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Profile Picture</th>
-                                            <th>Name</th>
-                                            <th>Gender</th>
-                                            <th>Progress Bar</th>
+             
+                <section id="progress" class="tab-content hidden">
+                    <?php
+                    foreach ($courses as $course):
+                        $students_by_course = $pdo->prepare("SELECT * FROM enrollments JOIN students ON students.id = enrollments.student_id JOIN courses ON courses.id = enrollments.course_id WHERE course_id = ?");
+                        $students_by_course->execute([$course['id']]);
+                        $students = $students_by_course->fetchAll(PDO::FETCH_ASSOC);
+
+                        if (!empty($students)): ?>
+                            <h3><?php echo htmlspecialchars($course['course_name']); ?> </h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Profile Picture</th>
+                                        <th>Name</th>
+                                        <th>Progress</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($students as $student): ?>
+                                        <tr class="student-item" data-name="<?php echo strtolower($student['name']); ?>">
+                                            <td>
+                                                <img src="<?php echo !empty($student['profile_pic']) ? './uploads/profile_picture/' . $student['profile_pic'] : './uploads/profile_picturedefault_profile.jpg'; ?>" alt="Student Profile" class="student-img">
+                                            </td>
+                                            <td><?php echo htmlspecialchars($student['name']); ?></td>
+                                            <td>
+                                                <?php
+                                                $progress = getStudentProgress($student['student_id'], $course['id'], $pdo);
+                                                ?>
+                                                <div class="progress-container">
+                                                    <div class="progress-bar" style="width: <?php echo $progress; ?>%"></div>
+                                                </div>
+                                                <span class="progress-text"><?php echo $progress; ?>%</span>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody id="studentList">
-                                        <?php foreach ($students_by_course[$course['id']] as $student): ?>
-                                            <tr class="student-item" data-name="<?php echo strtolower($student['name']); ?>">
-                                                <td>
-                                                    <img src="<?php echo !empty($student['profile_pic']) ? './uploads/profile_picture/' . $student['profile_pic'] : './uploads/profile_picturedefault_profile.jpg'; ?>" alt="Student Profile" class="student-img">
-                                                </td>
-                                                <td><?php echo htmlspecialchars($student['name']); ?></td>
-                                                <td class="student-gender"><?php echo htmlspecialchars($student['gender']); ?></td>
-                                                <td>
-                                                    <?php
-                                                    $progress = rand(50, 100);
-                                                    ?>
-                                                    <div class="progress-container">
-                                                        <div class="progress-bar" style="width: <?php echo $progress; ?>%"></div>
-                                                    </div>
-                                                    <span class="progress-text"><?php echo $progress; ?>%</span>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            <?php else: ?>
-                                <p>No students enrolled in this course yet.</p>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <p>No courses assigned to this instructor.</p>
-                    <?php endif; ?>
-                </section>
-                <section id="progress" class="tab-content">
-                    <tbody id="studentList" class="tab-content">
-                        <?php
-                        foreach ($courses as $course):
-                            $students_by_course = $pdo->prepare("SELECT * FROM enrollments JOIN students ON students.id = enrollments.student_id JOIN courses ON courses.id = enrollments.course_id WHERE course_id = ?");
-                            $students_by_course->execute([$course['id']]);
-                            $students = $students_by_course->fetchAll(PDO::FETCH_ASSOC);
-
-                            if (!empty($students)): ?>
-                                <h3><?php echo htmlspecialchars($course['course_name']); ?> </h3>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Profile Picture</th>
-                                            <th>Name</th>
-                                            <th>Progress</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($students as $student): ?>
-                                            <tr class="student-item" data-name="<?php echo strtolower($student['name']); ?>">
-                                                <td>
-                                                    <img src="<?php echo !empty($student['profile_pic']) ? './uploads/profile_picture/' . $student['profile_pic'] : './uploads/profile_picturedefault_profile.jpg'; ?>" alt="Student Profile" class="student-img">
-                                                </td>
-                                                <td><?php echo htmlspecialchars($student['name']); ?></td>
-                                                <td>
-                                                    <?php
-                                                    function getStudentProgress($student_id, $course_id, $pdo)
-                                                    {
-                                                        $query = "SELECT m.id AS module_id, mc.is_done 
-                                                                  FROM modules m
-                                                                  LEFT JOIN module_completion mc ON m.id = mc.module_id AND mc.student_id = :student_id
-                                                                  WHERE m.course_id = :course_id";
-                                                        $stmt = $pdo->prepare($query);
-                                                        $stmt->bindParam(':student_id', $student_id, PDO::PARAM_INT);
-                                                        $stmt->bindParam(':course_id', $course_id, PDO::PARAM_INT);
-                                                        $stmt->execute();
-                                                        $modules = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                                                        $totalModules = count($modules);
-                                                        $completedModules = 0;
-                                                        foreach ($modules as $module) {
-                                                            if ($module['is_done'] == 1) {
-                                                                $completedModules++;
-                                                            }
-                                                        }
-                                                        $progress = $totalModules > 0 ? ($completedModules / $totalModules) * 100 : 0;
-                                                        return round($progress, 2);
-                                                    }
-
-                                                    $progress = getStudentProgress($student['student_id'], $course['id'], $pdo);
-
-                                                    ?>
-                                                    <div class="progress-container">
-                                                        <div class="progress-bar" style="width: <?php echo $progress; ?>%"></div>
-                                                    </div>
-                                                    <span class="progress-text"><?php echo $progress; ?>%</span>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            <?php else: ?>
-                                <p>No students enrolled in <?php echo htmlspecialchars($course['name']); ?>.</p>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php else: ?>
+                            <p>No students enrolled in <?php echo htmlspecialchars($course['course_name']); ?>.</p>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                    <?php
+                    function getStudentProgress($student_id, $course_id, $pdo)
+                    {
+                        $query = "SELECT m.id AS module_id, mc.is_done 
+                                           FROM modules m
+                                           LEFT JOIN module_completion mc ON m.id = mc.module_id AND mc.student_id = :student_id
+                                           WHERE m.course_id = :course_id";
+                        $stmt = $pdo->prepare($query);
+                        $stmt->bindParam(':student_id', $student_id, PDO::PARAM_INT);
+                        $stmt->bindParam(':course_id', $course_id, PDO::PARAM_INT);
+                        $stmt->execute();
+                        $modules = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        $totalModules = count($modules);
+                        $completedModules = 0;
+                        foreach ($modules as $module) {
+                            if ($module['is_done'] == 1) {
+                                $completedModules++;
+                            }
+                        }
+                        $progress = $totalModules > 0 ? ($completedModules / $totalModules) * 100 : 0;
+                        return round($progress, 2);
+                    }
+                    ?>
                     </tbody>
                 </section>
                 <section id="evaluate" class="tab-content hidden">

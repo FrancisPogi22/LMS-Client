@@ -160,25 +160,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['select_course'])) {
 
 function getStudentProgress($student_id, $course_id, $pdo)
 {
-    $query = "SELECT m.id AS module_id, mc.is_done 
-              FROM modules m
-              LEFT JOIN module_completion mc ON m.id = mc.module_id AND mc.student_id = :student_id
-              WHERE m.course_id = :course_id";
-    $stmt = $pdo->prepare($query);
-    $stmt->bindParam(':student_id', $student_id, PDO::PARAM_INT);
-    $stmt->bindParam(':course_id', $course_id, PDO::PARAM_INT);
-    $stmt->execute();
-    $modules = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $totalModules = count($modules);
-    $completedModules = 0;
-    foreach ($modules as $module) {
-        if ($module['is_done'] == 1) {
-            $completedModules++;
-        }
+    try {
+        // Prepare the SQL query with placeholders
+        $stmt = $pdo->prepare("
+            SELECT
+                m.id AS module_id,
+                CASE WHEN cm.module_id IS NOT NULL THEN 1 ELSE 0 END AS is_completed
+            FROM
+                modules m
+            LEFT JOIN completed_modules cm 
+                ON m.id = cm.module_id AND cm.student_id = :student_id
+            WHERE
+                m.course_id = :course_id
+        ");
+        $stmt->execute([
+            'student_id' => $student_id,
+            'course_id' => $course_id
+        ]);
+        $modules = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $totalModules = count($modules);
+        $completedCount = array_reduce($modules, function ($count, $module) {
+            return $count + ($module['is_completed'] == 1 ? 1 : 0);
+        }, 0);
+
+        return ($totalModules > 0) ? round(($completedCount / $totalModules) * 100, 2) : 0;
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
+        return 0;
     }
-    $progress = $totalModules > 0 ? ($completedModules / $totalModules) * 100 : 0;
-    return round($progress, 2);
 }
+
 
 // if (isset($_POST['view_students'])) {
 //     $course_id = $_POST['course_id'];
@@ -415,28 +426,14 @@ function getStudentProgress($student_id, $course_id, $pdo)
                 </section>
                 <section id="manage-courses" class="tab-content active">
                     <h2>Manage Courses</h2>
-                    <div class="course-list">
-                        <?php foreach ($courses as $course): ?>
-                            <div class="course">
-                                <div class="course-info">
-                                    <h3 class="course-title"><?php echo htmlspecialchars($course['course_name']); ?></h3>
-                                    <div class="course-description">
-                                        <?php echo htmlspecialchars($course['course_description']); ?>
-                                    </div>
-                                    <br><br>
-                                    <p>Enrolled Students: <?php echo htmlspecialchars($course['student_count']); ?></p><br><br>
-                                </div>
-                                <div class="course-actions">
-                                    <a class="btn-primary" href="edit_course.php?course_id=<?php echo $course['id']; ?>">Edit</a>
-                                    <a class="btn-secondary" href="?delete_course_id=<?php echo $course['id']; ?>"
-                                        onclick="return confirm('Are you sure you want to delete this course?');">Delete</a>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </section>
-                <section id="create-course" class="tab-content">
-                    <h2>Create Course</h2>
+
+                    <!-- List of Courses -->
+
+
+                    <hr> <!-- Divider between course list and creation form -->
+
+                    <!-- Create New Course Form -->
+                    <h3>Create New Course</h3>
                     <div class="form-container">
                         <form method="POST" enctype="multipart/form-data">
                             <input type="text" name="new_course_name" placeholder="Course Name" required>
@@ -449,15 +446,161 @@ function getStudentProgress($student_id, $course_id, $pdo)
                                         <?php echo htmlspecialchars($instructor['name']); ?></option>
                                 <?php endforeach; ?>
                             </select>
-                            <button type="submit" name="create_course">Create Course</button>
+                            <button type="submit" name="create_course" class="create-course-btn">Create Course</button>
                         </form>
                     </div>
                 </section>
-                <section id="instructors" class="tab-content">
-                    <div class="header">
-                        <h2>Instructors</h2>
+                <div class="course-list">
+                    <?php foreach ($courses as $course): ?>
+                        <div class="course">
+                            <div class="course-info">
+                                <h3 class="course-title"><?php echo htmlspecialchars($course['course_name']); ?></h3>
+                                <div class="course-description">
+                                    <?php echo htmlspecialchars($course['course_description']); ?>
+                                </div>
+                                <br><br>
+                                <p>Enrolled Students: <?php echo $course['student_count']; ?></p><br><br>
+                            </div>
+                            <div class="course-actions">
+                                <a class="edit-btn2" href="edit_course.php?course_id=<?php echo $course['id']; ?>">Edit</a>
+                                <a class="delete-btn2" href="?delete_course_id=<?php echo $course['id']; ?>"
+                                    onclick="return confirm('Are you sure you want to delete this course?');">Delete</a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <style>
+                    /* Style for Edit Button */
+                    .edit-btn2 {
+                        background-color: #4CAF50;
+                        /* Green background */
+                        color: white;
+                        /* White text */
+                        padding: 8px 16px;
+                        /* Padding for a better button size */
+                        text-decoration: none;
+                        /* Remove underline */
+                        border-radius: 5px;
+                        /* Rounded corners */
+                        font-size: 16px;
+                        /* Font size */
+                        display: inline-block;
+                        /* Align with other inline elements */
+                        cursor: pointer;
+                        /* Pointer cursor on hover */
+                        transition: background-color 0.3s ease, transform 0.2s ease;
+                        /* Smooth transition for color and scale */
+                    }
+
+                    .edit-btn2:hover {
+                        background-color: #45a049;
+                        /* Darker green when hovered */
+                        transform: scale(1.05);
+                        /* Slightly enlarge the button */
+                    }
+
+                    /* Style for Delete Button */
+                    .delete-btn2 {
+                        background-color: #f44336;
+                        /* Red background */
+                        color: white;
+                        /* White text */
+                        padding: 8px 16px;
+                        /* Padding for a better button size */
+                        text-decoration: none;
+                        /* Remove underline */
+                        border-radius: 5px;
+                        /* Rounded corners */
+                        font-size: 16px;
+                        /* Font size */
+                        display: inline-block;
+                        /* Align with other inline elements */
+                        cursor: pointer;
+                        /* Pointer cursor on hover */
+                        transition: background-color 0.3s ease, transform 0.2s ease;
+                        /* Smooth transition for color and scale */
+                    }
+
+                    .delete-btn2:hover {
+                        background-color: #e53935;
+                        /* Darker red when hovered */
+                        transform: scale(1.05);
+                        /* Slightly enlarge the button */
+                    }
+                </style>
+                <style>
+                    .create-course-btn {
+                        background-color: #4CAF50;
+                        color: white;
+                        padding: 10px 20px;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        transition: background-color 0.3s ease;
+                    }
+
+                    .create-course-btn:hover {
+                        background-color: #45a049;
+                    }
+                </style>
+
+                <section id="add-new-instructors" class="tab-content ">
+                    <h2>Add New Instructors</h2>
+
+                    <!-- Register New Instructor Form -->
+                    <div class="form-container">
+                        <h3>Register New Instructor</h3>
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="text" name="instructor_name" placeholder="Instructor Name" required>
+                            <input type="email" name="instructor_email" placeholder="Instructor Email" required>
+                            <input type="password" name="instructor_password" placeholder="Instructor Password" required>
+                            <select name="instructor_gender" required>
+                                <option value="" disabled selected>Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                            <button type="submit" name="register_instructor" class="registerbtn2">Register Instructor</button>
+                        </form>
                     </div>
+                    <style>
+                        /* Style for Register Instructor button */
+                        .registerbtn2 {
+                            background-color: #008CBA;
+                            /* Blue background */
+                            color: white;
+                            /* White text */
+                            padding: 12px 24px;
+                            /* Padding for larger button */
+                            text-align: center;
+                            /* Center the text */
+                            text-decoration: none;
+                            /* Remove underline */
+                            display: inline-block;
+                            /* Align with other inline elements */
+                            font-size: 16px;
+                            /* Font size */
+                            border-radius: 5px;
+                            /* Rounded corners */
+                            border: none;
+                            /* No border */
+                            cursor: pointer;
+                            /* Pointer cursor on hover */
+                            transition: background-color 0.3s ease;
+                            /* Smooth transition for background color */
+                        }
+
+                        .registerbtn2:hover {
+                            background-color: #007B9E;
+                            /* Darker blue when hovered */
+                        }
+                    </style>
+
+                    <hr> <!-- Divider between form and instructor list -->
+
+                    <!-- Instructor List -->
                     <div class="instructor-list">
+                        <h3>Instructors</h3>
                         <table>
                             <thead>
                                 <tr>
@@ -483,14 +626,16 @@ function getStudentProgress($student_id, $course_id, $pdo)
                                             ?>
                                         </td>
                                         <td>
+                                            <!-- Update Button -->
                                             <button
-                                                onclick="openEditModal('<?php echo $instructor['id']; ?>', '<?php echo htmlspecialchars($instructor['name']); ?>', '<?php echo htmlspecialchars($instructor['email']); ?>', '<?php echo htmlspecialchars($instructor['gender']); ?>')"
-                                                class="btn-edit">Edit</button>
-                                            <form method="POST" action="delete_instructor.php" style="display:inline;">
-                                                <input type="hidden" name="instructor_id"
-                                                    value="<?php echo $instructor['id']; ?>">
-                                                <button type="submit"
-                                                    onclick="return confirm('Are you sure you want to delete this instructor?');">Delete</button>
+                                                onclick="openUpdateModal('<?php echo $instructor['id']; ?>', '<?php echo htmlspecialchars($instructor['name']); ?>', '<?php echo htmlspecialchars($instructor['email']); ?>', '<?php echo htmlspecialchars($instructor['gender']); ?>')"
+                                                class="btn-update">
+                                                Update
+                                            </button>
+                                            <!-- Delete Instructor Button -->
+                                            <form method="POST" action="delete_instructor.php" style="display:inline;" onsubmit="return confirmDelete();">
+                                                <input type="hidden" name="instructor_id" value="<?php echo $instructor['id']; ?>">
+                                                <button type="submit" class="btn-delete">Delete</button>
                                             </form>
                                         </td>
                                     </tr>
@@ -499,39 +644,80 @@ function getStudentProgress($student_id, $course_id, $pdo)
                         </table>
                     </div>
                 </section>
-                <section id="editInstructorModal" class="modal">
+                <style>
+                    .btn-delete {
+                        background-color: #e74c3c;
+                        color: white;
+                        padding: 8px 15px;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        margin-right: 10px;
+                        transition: background-color 0.3s ease;
+                    }
+
+                    .btn-delete:hover {
+                        background-color: #c0392b;
+                    }
+
+                    .btn-update {
+                        background-color: #3498db;
+                        color: white;
+                        padding: 8px 15px;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        transition: background-color 0.3s ease;
+                    }
+
+                    .btn-update:hover {
+                        background-color: #2980b9;
+                    }
+                </style>
+
+                <!-- Update Instructor Modal -->
+                <div id="updateInstructorModal" class="modal">
                     <div class="modal-content">
                         <span class="close" onclick="closeModal()">&times;</span>
-                        <h2>Edit Instructor</h2>
+                        <h2>Update Instructor</h2>
+
+                        <!-- Form content -->
                         <form method="POST" action="edit_instructor.php" enctype="multipart/form-data">
-                            <input type="hidden" name="instructor_id" id="edit_instructor_id">
-                            <label for="edit_instructor_name">Instructor Name</label>
-                            <input type="text" id="edit_instructor_name" name="instructor_name" required>
-                            <label for="edit_instructor_email">Email</label>
-                            <input type="email" id="edit_instructor_email" name="instructor_email" required>
-                            <label for="edit_instructor_gender">Gender</label>
-                            <select id="edit_instructor_gender" name="instructor_gender" required>
+                            <input type="hidden" name="instructor_id" id="update_instructor_id">
+
+                            <label for="update_instructor_name">Instructor Name</label>
+                            <input type="text" id="update_instructor_name" name="instructor_name" required>
+
+                            <label for="update_instructor_email">Email</label>
+                            <input type="email" id="update_instructor_email" name="instructor_email" required>
+
+                            <label for="update_instructor_gender">Gender</label>
+                            <select id="update_instructor_gender" name="instructor_gender" required>
                                 <option value="">Select Gender</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
                                 <option value="other">Other</option>
                             </select>
+
                             <label for="course_assignment">Assign Course</label>
                             <select id="course_assignment" name="course_id">
                                 <option value="">Select a course</option>
                                 <?php
+                                // Assuming you have a $courses array containing courses
                                 foreach ($courses as $course): ?>
-                                    <option value="<?php echo $course['id']; ?>">
-                                        <?php echo htmlspecialchars($course['course_name']); ?>
-                                    </option>
+                                    <option value="<?php echo $course['id']; ?>"><?php echo htmlspecialchars($course['course_name']); ?></option>
                                 <?php endforeach; ?>
                             </select>
+
                             <label for="instructor_profile_picture">Profile Picture</label>
                             <input type="file" id="instructor_profile_picture" name="instructor_profile_picture">
+
                             <button type="submit">Update Instructor</button>
                         </form>
                     </div>
-                </section>
+                </div>
                 <?php
                 if (isset($_GET['status'])) {
                     $status = $_GET['status'];
@@ -581,6 +767,11 @@ function getStudentProgress($student_id, $course_id, $pdo)
                                                     onmouseover="this.style.backgroundColor='#e53935'; this.style.transform='scale(1.05)';"
                                                     onmouseout="this.style.backgroundColor='#f44336'; this.style.transform='scale(1)';">Deny</a>
                                             <?php endif; ?>
+                                            <!-- Edit Button -->
+                                            <button onclick="openEditModal(<?php echo $student['id']; ?>, '<?php echo htmlspecialchars($student['name']); ?>', '<?php echo htmlspecialchars($student['email']); ?>')"
+                                                style="display: inline-block; padding: 10px 20px; margin: 5px; border-radius: 5px; background-color: #2196F3; color: white; border: 1px solid #2196F3; font-weight: bold; text-decoration: none; transition: background-color 0.3s ease, transform 0.3s ease;"
+                                                onmouseover="this.style.backgroundColor='#1976D2'; this.style.transform='scale(1.05)';"
+                                                onmouseout="this.style.backgroundColor='#2196F3'; this.style.transform='scale(1)';">Edit</button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -588,6 +779,42 @@ function getStudentProgress($student_id, $course_id, $pdo)
                         </table>
                     </div>
                 </section>
+
+                <!-- Edit Modal -->
+                <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
+                    <div style="background-color: white; width: 50%; margin: 10% auto; padding: 20px; border-radius: 8px;">
+                        <h3>Edit Student</h3>
+                        <form id="editForm" method="POST" action="update_student.php">
+                            <input type="hidden" name="id" id="editStudentId">
+                            <div style="margin-bottom: 10px;">
+                                <label for="editName" style="display: block; font-weight: bold;">Name:</label>
+                                <input type="text" name="name" id="editName" style="width: 100%; padding: 8px;" required>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label for="editEmail" style="display: block; font-weight: bold;">Email:</label>
+                                <input type="email" name="email" id="editEmail" style="width: 100%; padding: 8px;" required>
+                            </div>
+                            <button type="submit" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Changes</button>
+                            <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Cancel</button>
+                        </form>
+                    </div>
+                </div>
+
+
+                <script>
+                    // Open Edit Modal
+                    function openEditModal(id, name, email) {
+                        document.getElementById('editStudentId').value = id;
+                        document.getElementById('editName').value = name;
+                        document.getElementById('editEmail').value = email;
+                        document.getElementById('editModal').style.display = 'block';
+                    }
+
+                    // Close Edit Modal
+                    function closeEditModal() {
+                        document.getElementById('editModal').style.display = 'none';
+                    }
+                </script>
                 <section id="add-new-instructors" class="tab-content">
                     <h2>Register New Instructor</h2>
                     <div class="form-container">

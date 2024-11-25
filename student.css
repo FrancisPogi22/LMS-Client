@@ -16,21 +16,7 @@ header {
 .course-item {
   padding: 0 20px;
 }
-.progress-bar {
-    width: 100%;
-    background-color: #f3f3f3;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    position: relative;
-    height: 20px; /* Set the height for the progress bar */
-}
 
-.progress {
-    height: 100%;
-    background-color: #4caf50; /* Green color for progress */
-    border-radius: 8px;
-    transition: width 0.3s ease; /* Smooth transition for width change */
-}
 
 .logo img {
   height: 40px; /* Adjust as needed */
