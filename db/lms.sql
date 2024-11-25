@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 24, 2024 at 01:09 PM
+-- Generation Time: Nov 25, 2024 at 05:49 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -35,14 +35,6 @@ CREATE TABLE `admins` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `admins`
---
-
-INSERT INTO `admins` (`id`, `username`, `email`, `password`, `created_at`) VALUES
-(6, 'test', 'francistengteng10@gmail.com', '$2y$10$g4NwO3QlSVnN5Z2XWIxtOugigQ80FBCk/W1aYjf3mQp4O00cNTXCe', '2024-11-23 23:00:03'),
-(7, 'ADMIN2', 'admin@gmail.com', '$2y$10$Mj7vOy/asdOgXBeEzukpTes1T238Oxv994iVB2ElGjbftv/IMo58W', '2024-11-24 08:21:53');
-
 -- --------------------------------------------------------
 
 --
@@ -57,13 +49,6 @@ CREATE TABLE `assessments` (
   `assessment_description` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `assessments`
---
-
-INSERT INTO `assessments` (`id`, `course_id`, `instructor_id`, `assessment_title`, `assessment_description`, `created_at`) VALUES
-(19, 22, 27, 'can you please answer this questions', 'sadasd', '2024-11-24 10:21:24');
 
 -- --------------------------------------------------------
 
@@ -80,14 +65,6 @@ CREATE TABLE `assessment_feedback` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `assessment_feedback`
---
-
-INSERT INTO `assessment_feedback` (`id`, `assessment_id`, `user_id`, `user_type`, `comment`, `created_at`) VALUES
-(25, 38, 27, 'instructor', 'nice one baby', '2024-11-24 10:23:09'),
-(26, 39, 27, 'instructor', 'dasdasdsdad', '2024-11-24 11:05:08');
-
 -- --------------------------------------------------------
 
 --
@@ -103,14 +80,6 @@ CREATE TABLE `assessment_submissions` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `assessment_submissions`
---
-
-INSERT INTO `assessment_submissions` (`id`, `assessment_id`, `student_id`, `course_id`, `submission_text`, `created_at`) VALUES
-(38, 840, 6, 22, '6742fe62bd15f-ED536788.pdf', '2024-11-24 10:22:26'),
-(39, 131, 7, 22, '67430424cc30c-Dumara-og_Continuation MIDTERM EXAMINATION.pdf', '2024-11-24 10:47:00');
-
 -- --------------------------------------------------------
 
 --
@@ -124,14 +93,6 @@ CREATE TABLE `comments` (
   `content` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `comments`
---
-
-INSERT INTO `comments` (`comment_id`, `post_id`, `student_id`, `content`, `created_at`) VALUES
-(52, 0, 0, 'ok po maam', '2024-11-24 10:23:36'),
-(53, 0, 0, 'lfg\r\n', '2024-11-24 10:41:55');
 
 -- --------------------------------------------------------
 
@@ -206,7 +167,10 @@ INSERT INTO `enrollments` (`id`, `student_id`, `course_id`) VALUES
 (95, 6, 19),
 (96, 6, 21),
 (97, 6, 22),
-(98, 7, 22);
+(98, 7, 22),
+(99, 9, 19),
+(100, 9, 21),
+(101, 9, 22);
 
 -- --------------------------------------------------------
 
@@ -221,6 +185,13 @@ CREATE TABLE `e_certificates` (
   `certificate_path` varchar(255) NOT NULL,
   `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `e_certificates`
+--
+
+INSERT INTO `e_certificates` (`id`, `course_id`, `student_id`, `certificate_path`, `uploaded_at`) VALUES
+(4, 19, 9, 'certificates/Jack & Dorothy Byrne V2.png', '2024-11-25 01:32:29');
 
 -- --------------------------------------------------------
 
@@ -276,6 +247,14 @@ CREATE TABLE `modules` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `modules`
+--
+
+INSERT INTO `modules` (`id`, `course_id`, `title`, `module_file`, `video_file`, `created_at`) VALUES
+(25, 19, '', 'uploads/240908 SEO Manager Job Description.pdf', NULL, '2024-11-25 03:09:09'),
+(26, 19, '', NULL, 'uploads/bandicam 2024-11-25 08-43-54-040.mp4', '2024-11-25 03:09:09');
+
 -- --------------------------------------------------------
 
 --
@@ -287,6 +266,20 @@ CREATE TABLE `module_completion` (
   `student_id` int(11) NOT NULL,
   `module_id` int(11) NOT NULL,
   `is_done` tinyint(4) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `password_resets`
+--
+
+CREATE TABLE `password_resets` (
+  `reset_id` int(11) NOT NULL,
+  `account_id` int(11) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `expires` datetime NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -344,7 +337,8 @@ CREATE TABLE `students` (
 --
 
 INSERT INTO `students` (`id`, `username`, `email`, `password`, `created_at`, `name`, `code`, `approved`, `reset_token`, `profile_pic`, `gender`) VALUES
-(6, 'kenshino', 'kenshino@gmail.com', '$2y$10$GCSa43RZWtA.45NoZdBSp.Lx6wdJqsqa5emBGmQJLhAltqyVCXqlC', '2024-11-24 08:20:19', 'kenshin mercado', 'LFY264', 1, '', NULL, NULL);
+(6, 'kenshino', 'kenshino@gmail.com', '$2y$10$GCSa43RZWtA.45NoZdBSp.Lx6wdJqsqa5emBGmQJLhAltqyVCXqlC', '2024-11-24 08:20:19', 'kenshin mercado', 'LFY264', 1, '', NULL, NULL),
+(9, 'asd', 'cabusasfg779@gmail.com', '$2y$10$1SiPSJjril1TnQTjmlA3NOKo6tvlr7FlEeKR0Ue0rk3VQJhmVZwJK', '2024-11-25 00:46:22', 'Francis Cabusas', 'XDK964', 1, '', NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -450,6 +444,12 @@ ALTER TABLE `module_completion`
   ADD KEY `module_id` (`module_id`);
 
 --
+-- Indexes for table `password_resets`
+--
+ALTER TABLE `password_resets`
+  ADD PRIMARY KEY (`reset_id`);
+
+--
 -- Indexes for table `posts`
 --
 ALTER TABLE `posts`
@@ -477,43 +477,43 @@ ALTER TABLE `students`
 -- AUTO_INCREMENT for table `admins`
 --
 ALTER TABLE `admins`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `assessments`
 --
 ALTER TABLE `assessments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `assessment_feedback`
 --
 ALTER TABLE `assessment_feedback`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `assessment_submissions`
 --
 ALTER TABLE `assessment_submissions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `comments`
 --
 ALTER TABLE `comments`
-  MODIFY `comment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
+  MODIFY `comment_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `comment_replies`
 --
 ALTER TABLE `comment_replies`
-  MODIFY `reply_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `reply_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `completed_modules`
 --
 ALTER TABLE `completed_modules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `courses`
@@ -525,13 +525,13 @@ ALTER TABLE `courses`
 -- AUTO_INCREMENT for table `enrollments`
 --
 ALTER TABLE `enrollments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
 
 --
 -- AUTO_INCREMENT for table `e_certificates`
 --
 ALTER TABLE `e_certificates`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `feedback`
@@ -549,13 +549,19 @@ ALTER TABLE `instructors`
 -- AUTO_INCREMENT for table `modules`
 --
 ALTER TABLE `modules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `module_completion`
 --
 ALTER TABLE `module_completion`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `password_resets`
+--
+ALTER TABLE `password_resets`
+  MODIFY `reset_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `posts`
@@ -567,7 +573,7 @@ ALTER TABLE `posts`
 -- AUTO_INCREMENT for table `students`
 --
 ALTER TABLE `students`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Constraints for dumped tables
