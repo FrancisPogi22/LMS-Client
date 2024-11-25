@@ -144,6 +144,73 @@ if (isset($_POST['submit_post_comment'])) {
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.1/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.1/dist/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="./assets/theme.css">
+    <style>
+        .assessment-content .comment-widget {
+            padding: 10px;
+            border: 1px solid #000000;
+        }
+
+        #progress {
+            flex-direction: column;
+        }
+
+        #progress h3 {
+            text-align: center;
+        }
+
+        .widget-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            flex-direction: column;
+        }
+
+        .modal-content {
+            position: relative;
+        }
+
+        .assessment-container {
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #000000;
+        }
+
+        .widget {
+            padding: 20px;
+            border: 1px solid #000000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .widget-details {
+            display: flex;
+            gap: 10px;
+        }
+
+        .widget-details img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+        }
+
+        .modal-close * {
+            color: #000000;
+        }
+
+        .modal-close i {
+            font-size: 25px;
+        }
+
+        .close-container {
+            margin-bottom: 20px;
+        }
+
+        .close-container a {
+            display: flex;
+            align-items: center;
+        }
+    </style>
 </head>
 
 <body>
@@ -332,7 +399,7 @@ if (isset($_POST['submit_post_comment'])) {
                     <div class="widget-container">
                         <?php
                         try {
-                            $stmt = $pdo->query("
+                            $stmt = $pdo->prepare("
                                 SELECT
                                     assessment_submissions.id,
                                     assessment_submissions.assessment_id,
@@ -345,10 +412,14 @@ if (isset($_POST['submit_post_comment'])) {
                                 FROM
                                     assessment_submissions
                                 JOIN students ON students.id = assessment_submissions.student_id
-                                JOIN comments ON post_id = assessment_submissions.id
+                                JOIN courses ON courses.id = assessment_submissions.course_id
+                                LEFT JOIN comments ON comments.post_id = assessment_submissions.id
+                                WHERE courses.instructor_id = :instructor_id
                                 ORDER BY
                                     assessment_submissions.created_at DESC
                             ");
+                            $stmt->bindValue(':instructor_id', $_SESSION['instructor_id'], PDO::PARAM_INT);
+                            $stmt->execute();
                             $assessments = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         } catch (PDOException $e) {
                             echo "Error: " . $e->getMessage();
@@ -461,6 +532,28 @@ if (isset($_POST['submit_post_comment'])) {
             </div>
         </div>
     </section>
+
+    <style>
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #4caf50;
+        }
+
+        .progress-text {
+            display: block;
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+    </style>
     <script>
         function searchStudents() {
             let input = document.getElementById('studentSearch');
