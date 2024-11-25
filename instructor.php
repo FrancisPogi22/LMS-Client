@@ -109,6 +109,28 @@ function getStudentProgress($student_id, $course_id, $pdo)
     }
 }
 
+if (isset($_POST['submit_post_comment'])) {
+    $assessment_id = $_POST['assessment_id'];
+    $comment = trim($_POST['comment']);
+    $student_id = $_POST['student_id'];
+
+    if (!empty($comment)) {
+        $stmt = $pdo->prepare("INSERT INTO comments (post_id, student_id, content, created_at) 
+                               VALUES (:post_id, :student_id, :content, NOW())");
+
+        $stmt->execute([
+            ':post_id' => $assessment_id,
+            ':student_id' => $student_id,
+            ':content' => $comment
+        ]);
+
+        header('Location: instructor.php');
+        exit();
+    } else {
+        $error_message = "Comment cannot be empty.";
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -123,6 +145,11 @@ function getStudentProgress($student_id, $course_id, $pdo)
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.1/dist/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="./assets/theme.css">
     <style>
+        .assessment-content .comment-widget {
+            padding: 10px;
+            border: 1px solid #000000;
+        }
+
         #progress {
             flex-direction: column;
         }
@@ -380,10 +407,12 @@ function getStudentProgress($student_id, $course_id, $pdo)
                                     assessment_submissions.course_id,
                                     assessment_submissions.submission_text,
                                     assessment_submissions.created_at,
-                                    students.name AS student_name
+                                    students.name AS student_name,
+                                    comments.*
                                 FROM
                                     assessment_submissions
                                 JOIN students ON students.id = assessment_submissions.student_id
+                                JOIN comments ON post_id = assessment_submissions.id
                                 ORDER BY
                                     assessment_submissions.created_at DESC
                             ");
@@ -399,7 +428,6 @@ function getStudentProgress($student_id, $course_id, $pdo)
                                         <img src="./images/profile.png" alt="Assessment Image">
                                         <div class="personal-details">
                                             <h4><?php echo htmlspecialchars($assessment['student_name']); ?></h4>
-
                                             <?php
                                             if (!empty($assessment['submission_text'])) {
                                                 echo "<p>Passed his assessment work.</p>";
@@ -407,18 +435,65 @@ function getStudentProgress($student_id, $course_id, $pdo)
                                                 echo "<p>Does not pass his assessment work.</p>";
                                             }
                                             ?>
-
                                             <p><?php echo htmlspecialchars($assessment['created_at']); ?></p>
                                         </div>
                                     </div>
-                                    <a href="#" class="evaluate-btn"
-                                        data-student-name="<?php echo htmlspecialchars($assessment['student_name']); ?>"
-                                        data-submission-text="<?php echo htmlspecialchars($assessment['submission_text']); ?>"
-                                        data-created-at="<?php echo htmlspecialchars($assessment['created_at']); ?>"
-                                        data-submission-id="<?php echo htmlspecialchars($assessment['id']); ?>"
-                                        data-assessment-link="./uploads/<?php echo $assessment['submission_text']; ?>">
-                                        <h4>Send Comment</h4>
-                                    </a>
+                                    <div class="feedback-container">
+                                        <a href="#" class="evaluate-btn"
+                                            data-student-name="<?php echo htmlspecialchars($assessment['student_name']); ?>"
+                                            data-submission-text="<?php echo htmlspecialchars($assessment['submission_text']); ?>"
+                                            data-created-at="<?php echo htmlspecialchars($assessment['created_at']); ?>"
+                                            data-submission-id="<?php echo htmlspecialchars($assessment['id']); ?>"
+                                            data-assessment-link="./uploads/<?php echo $assessment['submission_text']; ?>">
+                                            <h4>Send Feedback</h4>
+                                        </a>
+                                        <a href="#" class="comment-btn"
+                                            <h4>View Comment</h4>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div id="commendModal" class="modal">
+                                    <div class="modal-content">
+                                        <div class="close-container">
+                                            <a href="#" class="modal-close">
+                                                <i class="bi bi-chevron-left"></i>
+                                                <span>Back</span>
+                                            </a>
+                                        </div>
+
+                                        <h4>Assessment Content</h4>
+                                        <?php
+                                        if (!empty($assessments)) {
+                                            foreach ($assessments as $assessment) {
+                                        ?>
+                                                <div class="assessment-content">
+                                                    <div class="comment-widget">
+                                                        <?php if (!empty($assessment['content'])): ?>
+                                                            <p><?php echo nl2br(htmlspecialchars($assessment['content'])); ?></p>
+                                                            <span><?php echo date('F d, Y', strtotime($assessment['created_at'])); ?></span>
+                                                        <?php else: ?>
+                                                            <p>No content available for this assessment.</p>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                        <?php
+                                            }
+                                        } else {
+                                            echo "<p>No assessments available for this course.</p>";
+                                        }
+                                        ?>
+
+                                        <p><strong>Add a Comment</strong></p>
+                                        <form action="" method="POST">
+                                            <input type="hidden" name="student_id" value="<?php echo htmlspecialchars($assessment['student_id']); ?>">
+                                            <input type="hidden" name="assessment_id" id="assessment_id" value="<?php echo htmlspecialchars($assessment['id']); ?>">
+                                            <textarea name="comment" id="comment-text" cols="30" rows="10" required></textarea>
+                                            <button type="submit" name="submit_post_comment" class="btn-primary" style="float: right; background: #2563eb; color: #fff; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">
+                                                <i class="bi bi-send-fill"></i>
+                                                <span>Comment</span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                                 <div id="assessmentModal" class="modal">
                                     <div class="modal-content">
@@ -532,6 +607,17 @@ function getStudentProgress($student_id, $course_id, $pdo)
                 e.preventDefault();
 
                 document.getElementById("assessmentModal").style.display = "none";
+            });
+        });
+
+
+
+        const commendButton = document.querySelectorAll('.comment-btn');
+        commendButton.forEach(function(button) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                document.getElementById("commendModal").style.display = "block";
             });
         });
 

@@ -577,6 +577,8 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                 $submission = $pdo->prepare("SELECT * FROM assessment_submissions WHERE assessment_id = ? AND student_id = ?");
                 $submission->execute([$assessment['id'], $student_id]);
                 $submission = $submission->fetch(PDO::FETCH_ASSOC);
+
+                print_r($student_id);
         ?>
                 <div class="assessment">
                     <p><strong>Assessment Title:</strong> <?php echo htmlspecialchars($assessment['assessment_title']); ?></p>
@@ -609,12 +611,10 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                                 $newFileName = uniqid() . '-' . basename($fileName);
 
                                 if (move_uploaded_file($fileTmpPath, $uploadDir . $newFileName)) {
-                                    // Check for missing parameters
                                     if (!$course_id || !$student_id || !$assessment_id) {
                                         return "Missing required input data: course_id, student_id, or assessment_id.";
                                     }
 
-                                    // Prepare and execute the query
                                     $stmt = $pdo->prepare("
                                         INSERT INTO assessment_submissions 
                                         (assessment_id, student_id, course_id, submission_text, created_at) 
@@ -644,7 +644,7 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                         if (isset($_POST['send_assessment'])) {
                             $course_id = $_GET['course_id'] ?? null;
                             $student_id =  $_SESSION['student_id'];
-                            $assessment_id = rand(100, 999);
+                            $assessment_id = $assessment['id']; 
                             $result = handleAssignmentUpload($pdo, $course_id, $student_id, $assessment_id);
                             echo "<p>{$result}</p>";
                         }
