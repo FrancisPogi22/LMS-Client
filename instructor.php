@@ -607,6 +607,7 @@ if (isset($_POST['submit_post_comment'])) {
                 e.preventDefault();
 
                 document.getElementById("assessmentModal").style.display = "none";
+                document.getElementById("commendModal").style.display = "none";
             });
         });
 

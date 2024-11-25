@@ -36,10 +36,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <section id="admin">
         <div class="wrapper">
             <div class="admin-container">
-                <!-- <video class="background-video" autoplay loop muted>
-                    <source src="/background/background3.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video> -->
                 <h1>Admin Login</h1>
                 <form method="POST" action="">
                     <div class="field-container">
