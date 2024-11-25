@@ -1,7 +1,6 @@
 <?php
-session_start(); // Start the session
+session_start();
 
-// Database connection
 $host = 'localhost';
 $db_name = 'lms';
 $username = 'root';
@@ -15,9 +14,7 @@ try {
 }
 
 $course_id = $_GET['course_id'];
-$student_id = $_SESSION['student_id']; // Replace with your session variable name
-
-// Fetch course details along with instructor's email, profile picture, and gender
+$student_id = $_SESSION['student_id'];
 $course = $pdo->prepare("
     SELECT c.*, i.name AS instructor_name, i.email, i.profile_picture, i.gender
     FROM courses c 
@@ -35,65 +32,51 @@ if (!$course) {
 // Handle post submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['post_content'])) {
     $content = $_POST['post_content'];
-    $image = ''; // Handle image upload if needed
 
-    // Check if an image was uploaded
     if (isset($_FILES['post_image']) && $_FILES['post_image']['error'] == 0) {
-        // Define upload directory and filename
         $upload_dir = 'uploads/';
         $image = $upload_dir . basename($_FILES['post_image']['name']);
 
-        // Move uploaded file to the desired directory
         if (!move_uploaded_file($_FILES['post_image']['tmp_name'], $image)) {
             echo "Error uploading image.";
         }
     }
 
-    // Insert post into the database
     $stmt = $pdo->prepare("INSERT INTO posts (course_id, student_id, content, image) VALUES (?, ?, ?, ?)");
     $stmt->execute([$course_id, $student_id, $content, $image]);
-    header("Location: courses.php?course_id=$course_id"); // Redirect to avoid resubmission
+    header("Location: courses.php?course_id=$course_id");
     exit;
 }
 
-// Handle comment submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_content'])) {
     $comment_content = $_POST['comment_content'];
     $post_id = $_POST['post_id'];
-
-    // Insert comment into the database
     $stmt = $pdo->prepare("INSERT INTO comments (post_id, student_id, content) VALUES (?, ?, ?)");
     $stmt->execute([$post_id, $student_id, $comment_content]);
-    header("Location: courses.php?course_id=$course_id"); // Redirect to avoid resubmission
+    header("Location: courses.php?course_id=$course_id");
     exit;
 }
 
-// Handle reply submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reply_content'])) {
     $reply_content = $_POST['reply_content'];
     $comment_id = $_POST['comment_id'];
-
-    // Insert reply into the database
     $stmt = $pdo->prepare("INSERT INTO comment_replies (comment_id, student_id, content) VALUES (?, ?, ?)");
     $stmt->execute([$comment_id, $student_id, $reply_content]);
-    header("Location: courses.php?course_id=$course_id"); // Redirect to avoid resubmission
+    header("Location: courses.php?course_id=$course_id");
     exit;
 }
 
-// Fetch posts for the course (from all enrolled students)
 $posts = $pdo->prepare("SELECT p.*, s.name as student_name FROM posts p JOIN students s ON p.student_id = s.id WHERE p.course_id = ?");
 $posts->execute([$course_id]);
 $posts = $posts->fetchAll(PDO::FETCH_ASSOC);
-
-// Fetch comments for each post
 $comments = [];
+
 foreach ($posts as $post) {
     $post_id = $post['id'];
     $comment_stmt = $pdo->prepare("SELECT c.*, s.name as student_name FROM comments c JOIN students s ON c.student_id = s.id WHERE c.post_id = ?");
     $comment_stmt->execute([$post_id]);
     $comments[$post_id] = $comment_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch replies for each comment
     foreach ($comments[$post_id] as $key => $comment) {
         $comment_id = $comment['comment_id'];
         $reply_stmt = $pdo->prepare("SELECT r.*, s.name as student_name FROM comment_replies r JOIN students s ON r.student_id = s.id WHERE r.comment_id = ?");
@@ -102,27 +85,21 @@ foreach ($posts as $post) {
     }
 }
 
-// Fetch modules for the course
 $modules = $pdo->prepare("SELECT * FROM modules WHERE course_id = ?");
 $modules->execute([$course_id]);
 $modules = $modules->fetchAll(PDO::FETCH_ASSOC);
-
-// Fetch completed modules for the student
 $completed_modules = $pdo->prepare("SELECT module_id FROM completed_modules WHERE student_id = ?");
 $completed_modules->execute([$student_id]);
 $completed_modules = $completed_modules->fetchAll(PDO::FETCH_COLUMN);
 
-// Handle module completion
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
     $module_id = $_POST['module_id'];
 
-    // Check if the module is already marked as completed
     if (!in_array($module_id, $completed_modules)) {
         $insert = $pdo->prepare("INSERT INTO completed_modules (student_id, module_id) VALUES (?, ?)");
         $insert->execute([$student_id, $module_id]);
     }
 
-    // Refresh the page to update progress bar and module completion status
     header("Location: courses.php?course_id=$course_id");
     exit;
 }
@@ -161,7 +138,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
 
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -171,31 +147,8 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
     <link rel="stylesheet" href="styles.css">
     <title><?php echo htmlspecialchars($course['course_name']); ?></title>
     <link rel="stylesheet" href="./css/courses.css">
-    <style>
-        .progress-bar {
-            width: 100%;
-            background-color: #f3f3f3;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            position: relative;
-            height: 20px;
-            /* Set the height for the progress bar */
-        }
-
-        .progress {
-            height: 100%;
-            background-color: #4caf50;
-            /* Green color for progress */
-            border-radius: 8px;
-            transition: width 0.3s ease;
-            /* Smooth transition for width change */
-        }
-    </style>
     <link rel="stylesheet" href="./assets/theme.css">
-    <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
 </head>
 
 <body>
@@ -207,9 +160,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             <h2><?php echo htmlspecialchars($course['course_name']); ?></h2>
         </div>
     </header>
-
-
-
     <div class="tabs">
         <div class="tab active" onclick="openTab(event, 'overviewTab')">Overview</div>
         <div class="tab" onclick="openTab(event, 'contentTab')">Content</div>
@@ -219,16 +169,14 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
         <div class="tab" onclick="openTab(event, 'certificateTab')">E-Certificates</div>
 
     </div>
-    <!-- Display E-Certificates -->
     <div id="certificateTab" class="tab-content" style="display: none;">
         <h3 style="text-align: center; font-family: Arial, sans-serif; margin-bottom: 20px;">E-Certificates</h3>
         <?php
-        // Fetch e-certificates for the current course and student
         $certificates = $pdo->prepare("
-        SELECT * 
-        FROM e_certificates 
-        WHERE course_id = ? AND student_id = ?
-    ");
+            SELECT * 
+            FROM e_certificates 
+            WHERE course_id = ? AND student_id = ?
+        ");
         $certificates->execute([$course_id, $student_id]);
         $certificates = $certificates->fetchAll(PDO::FETCH_ASSOC);
 
@@ -240,7 +188,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                         $filePath = htmlspecialchars($certificate['certificate_path']);
                         $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
 
-                        // Display certificates based on file type
                         if (in_array($fileExtension, ['jpg', 'jpeg', 'png'])): ?>
                             <img src="<?php echo $filePath; ?>" alt="Certificate" class="certificate-image">
                         <?php elseif ($fileExtension === 'pdf'): ?>
@@ -249,7 +196,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                             <p>Unsupported file type.</p>
                         <?php endif; ?>
                         <p class="certificate-date">Uploaded on: <?php echo htmlspecialchars($certificate['uploaded_at']); ?></p>
-                        <!-- Download Button -->
                         <a href="<?php echo $filePath; ?>" download class="download-button">Download Certificate</a>
                     </div>
                 <?php endforeach; ?>
@@ -258,14 +204,10 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             <p style="text-align: center; font-size: 16px; color: #555;">No certificates available for this course.</p>
         <?php endif; ?>
     </div>
-
-
-    <!-- Overview Tab -->
     <div id="overviewTab" class="tab-content active">
         <h3>Overview</h3>
         <p><strong>Description:</strong> <?php echo htmlspecialchars($course['course_description']); ?></p>
         <p><strong>Instructor:</strong> <?php echo htmlspecialchars($course['instructor_name'] ?? 'Not available'); ?></p>
-
         <div class="instructor-profile">
             <h4>Instructor Profile</h4>
             <?php if ($course['profile_picture']): ?>
@@ -278,12 +220,7 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             <p><strong>Gender:</strong> <?php echo htmlspecialchars($course['gender']); ?></p>
         </div>
     </div>
-
-
-
-    <!-- Modules Tab -->
     <div id="modulesTab" class="tab-content">
-        <!-- Course Progress Bar -->
         <div id="progressContainerModules" style="margin-top: 20px; width: 100%; margin-bottom: 20px;">
             <?php
             $progress = getStudentProgress($student_id, $course_id, $pdo, "module");
@@ -293,7 +230,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                 <div id="progressBar" class="progress" style="height: 15px;width: <?php echo $progress; ?>%; background-color: #4caf50;"></div>
             </div>
         </div>
-
         <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Modules (PDF)</h3>
         <div class="uploaded-modules" style="list-style-type: none; padding: 0; margin-top: 10px;">
             <?php if (empty($modules)): ?>
@@ -340,11 +276,8 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
-
-        <!-- PDF Modal -->
         <div id="pdfModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center;">
             <div style="background: white; width: 80%; max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 15px; position: relative;">
-                <!-- Close button for the PDF modal -->
                 <span onclick="closeModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #333;">&times;</span>
 
                 <h2 id="pdfTitle" style="font-size: 18px; margin-bottom: 10px;"></h2>
@@ -352,10 +285,7 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             </div>
         </div>
     </div>
-
-    <!-- Content Tab -->
     <div id="contentTab" class="tab-content">
-        <!-- Progress Bar -->
         <div id="progressContainer" style="margin-top: 20px; width: 100%;">
             <?php
             $progress = getStudentProgress($student_id, $course_id, $pdo, "video");
@@ -365,7 +295,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                 <div id="progressBar" class="progress" style="height: 15px;width: <?php echo $progress; ?>%; background-color: #4caf50;"></div>
             </div>
         </div>
-
         <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Videos</h3>
         <div class="uploaded-modules" style="list-style-type: none; padding: 0; margin-top: 10px;">
             <?php if (empty($modules)): ?>
@@ -411,8 +340,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             <?php endif; ?>
         </div>
     </div>
-
-    <!-- Video Modal -->
     <div id="videoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center;">
         <div style="background: white; width: 80%; max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 15px; position: relative;">
             <span onclick="closeModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
@@ -422,42 +349,30 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                 Your browser does not support the video tag.
             </video>
         </div>
-    </div> <!-- progress bar  -->
+    </div>
     <script>
-        // Get student ID and course ID (replace with dynamic PHP variables)
-        const studentId = <?php echo $student_id; ?>;
-        const courseId = <?php echo $course_id; ?>;
-        // Show PDF content in modal
-        // Function to view the PDF in the modal
+        const studentId = <?php echo $student_id; ?>,
+            courseId = <?php echo $course_id; ?>;
+
         function viewPDF(pdfFile, title) {
             if (!pdfFile) {
                 alert("PDF file not found.");
                 return;
             }
 
-            // Set the title of the PDF modal
             document.getElementById('pdfTitle').textContent = title;
-            // Set the source for the iframe to load the PDF
             document.getElementById('pdfViewer').src = pdfFile;
-
-            // Display the modal
             document.getElementById('pdfModal').style.display = 'flex';
         }
 
-        // Function to close the modals (PDF and video)
         function closeModal() {
-            // Close both PDF and video modals
             document.getElementById('pdfModal').style.display = 'none';
             document.getElementById('videoModal').style.display = 'none';
-
-            // Reset the iframe source to stop loading the PDF
             document.getElementById('pdfViewer').src = '';
-
-            // Reset the video player (if applicable)
             document.getElementById('videoPlayer').pause();
             document.getElementById('videoPlayer').currentTime = 0;
         }
-        // Show video content in modal
+
         function showContent(title, videoFile) {
             if (!videoFile) {
                 alert("Video file not found.");
@@ -470,22 +385,15 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             document.getElementById('videoModal').style.display = 'flex';
         }
     </script>
-
-
-    <!-- Forum Tab -->
     <div id="forumTab" class="tab-content">
         <h3>Forum</h3>
-
-        <!-- Button to trigger the post form -->
         <button id="postButton" class="post-button" onclick="togglePostForm()">Post a new message</button>
-
-        <!-- Post Form (hidden by default) -->
         <div id="postForm" class="post-form" style="display: none; margin-top: 20px;">
-            <form method="POST" enctype="multipart/form-data"> <!-- Added form tag and enctype -->
+            <form method="POST" enctype="multipart/form-data">
                 <textarea name="post_content" rows="4" placeholder="What's on your mind?" required></textarea>
                 <input type="file" name="post_image" accept="image/*">
                 <div class="form-actions">
-                    <button type="submit">Post</button> <!-- Submit button for the form -->
+                    <button type="submit">Post</button>
                     <button type="button" class="cancel-button" onclick="togglePostForm()">Cancel</button>
                 </div>
             </form>
@@ -496,7 +404,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             <p>No posts yet.</p>
         <?php else: ?>
             <?php
-            // Reverse the posts array so the latest posts are displayed first
             $posts = array_reverse($posts);
             ?>
             <?php foreach ($posts as $post): ?>
@@ -506,7 +413,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                     <?php if ($post['image']): ?>
                         <img src="<?php echo htmlspecialchars($post['image']); ?>" alt="Post Image" class="post-image">
                     <?php endif; ?>
-
                     <div class="comments">
                         <h5>Comments:</h5>
                         <?php if (isset($comments[$post['id']]) && !empty($comments[$post['id']])): ?>
@@ -525,8 +431,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php endif; ?>
-
-                                        <!-- Reply Form -->
                                         <form method="POST" class="reply-form">
                                             <textarea name="reply_content" rows="2" placeholder="Add a reply..." required></textarea>
                                             <input type="hidden" name="comment_id" value="<?php echo $comment['comment_id']; ?>">
@@ -539,8 +443,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                             <p>No comments yet.</p>
                         <?php endif; ?>
                     </div>
-
-                    <!-- Comment Form -->
                     <form method="POST" class="comment-form">
                         <textarea name="comment_content" rows="2" placeholder="Add a comment..." required></textarea>
                         <input type="hidden" name="post_id" value="<?php echo $post['id']; ?>">
@@ -561,17 +463,15 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
         <h3>Assessments</h3>
 
         <?php
-        // Fetch assessments for the course
         $assessments = $pdo->prepare("
-        SELECT a.*, i.name AS instructor_name 
-        FROM assessments a
-        JOIN instructors i ON a.instructor_id = i.id
-        WHERE a.course_id = ?
-    ");
+            SELECT a.*, i.name AS instructor_name 
+            FROM assessments a
+            JOIN instructors i ON a.instructor_id = i.id
+            WHERE a.course_id = ?
+        ");
         $assessments->execute([$course_id]);
         $assessments = $assessments->fetchAll(PDO::FETCH_ASSOC);
 
-        // Check if assessments are available
         if (!empty($assessments)):
             foreach ($assessments as $assessment):
                 $submission = $pdo->prepare("SELECT * FROM assessment_submissions WHERE assessment_id = ? AND student_id = ?");
@@ -644,7 +544,7 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                         if (isset($_POST['send_assessment'])) {
                             $course_id = $_GET['course_id'] ?? null;
                             $student_id =  $_SESSION['student_id'];
-                            $assessment_id = $assessment['id']; 
+                            $assessment_id = $assessment['id'];
                             $result = handleAssignmentUpload($pdo, $course_id, $student_id, $assessment_id);
                             echo "<p>{$result}</p>";
                         }
@@ -708,34 +608,28 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
                     <script>
-                        // Ensure the DOM is fully loaded before attaching event listeners
                         document.addEventListener("DOMContentLoaded", function() {
-                            // Handle comment form submission
                             document.getElementById('commentForm').addEventListener('submit', function(event) {
-                                event.preventDefault(); // Prevent the default form submission
+                                event.preventDefault();
 
-                                const form = new FormData(this); // Get form data
+                                const form = new FormData(this);
 
-                                // Send the data via AJAX to save_comment.php
                                 fetch('save_comment.php', {
                                         method: 'POST',
                                         body: form
                                     })
-                                    .then(response => response.json()) // Parse the JSON response
+                                    .then(response => response.json())
                                     .then(data => {
                                         if (data.status === 'success') {
-                                            // SweetAlert for successful comment submission
                                             Swal.fire({
                                                 title: 'Comment Posted!',
                                                 text: data.message,
                                                 icon: 'success',
                                                 confirmButtonText: 'Okay'
                                             }).then(() => {
-                                                // Optionally, you can reload the page or update the comment section dynamically
-                                                location.reload(); // This will refresh the page to show the new comment
+                                                location.reload();
                                             });
                                         } else {
-                                            // SweetAlert for error if comment posting fails
                                             Swal.fire({
                                                 title: 'Error!',
                                                 text: data.message,
@@ -745,7 +639,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                                         }
                                     })
                                     .catch(error => {
-                                        // SweetAlert for any AJAX error
                                         Swal.fire({
                                             title: 'Error!',
                                             text: 'There was an issue with your comment submission. Please try again.',
@@ -756,15 +649,10 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                             });
                         });
                     </script>
-
-
-
-                    <!-- Displaying Comments -->
                     <?php
                     if ($submission) {
-                        // Fetch comments for the current submission (using the submission's 'id' as the 'post_id')
                         $comments = $pdo->prepare("SELECT * FROM comments WHERE post_id = ?");
-                        $comments->execute([$submission['id']]);  // Use the submission 'id' as the 'post_id'
+                        $comments->execute([$submission['id']]);
                         $comments = $comments->fetchAll(PDO::FETCH_ASSOC);
 
                         if (!empty($comments)):
@@ -777,11 +665,9 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                                         <em class="comment-time" style="font-size: 0.85em; color: #888;"><?php echo date('F d, Y', strtotime($comment['created_at'])); ?></em>
                                     </div>
                                     <?php echo date('F d, Y', strtotime($comment['created_at'])); ?></em>
-
-                                    <!-- Fetching and Displaying Instructor's Reply to the Comment -->
                                     <?php
                                     $replies = $pdo->prepare("SELECT * FROM replies WHERE comment_id = ?");
-                                    $replies->execute([$comment['comment_id']]);  // Use the correct comment_id for replies
+                                    $replies->execute([$comment['comment_id']]);
                                     $replies = $replies->fetchAll(PDO::FETCH_ASSOC);
 
                                     if (!empty($replies)):
@@ -808,9 +694,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             <p>No assessments available for this course.</p>
         <?php endif; ?>
     </div>
-
-
-
     <div id="modal" class="modal">
         <div class="modal-header">
             <span class="close" onclick="closeModal()">&times;</span>
@@ -818,17 +701,13 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
         </div>
         <div class="modal-content" id="modal-content"></div>
     </div>
-    <!-- Footer -->
     <footer style="background-color: #333; color: #fff; padding: 20px 0; text-align: center;">
         <div style="max-width: 1200px; margin: 0 auto; padding: 0 15px;">
             <div style="display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px;">
-                <!-- About Section -->
                 <div>
                     <h5>About Us</h5>
                     <p>We are dedicated to providing quality education and innovative solutions for students and instructors.</p>
                 </div>
-
-                <!-- Quick Links Section -->
                 <div>
                     <h5>Quick Links</h5>
                     <ul style="list-style-type: none; padding: 0;">
@@ -838,8 +717,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                         <li><a href="terms.php" style="color: #fff; text-decoration: none;">Terms of Service</a></li>
                     </ul>
                 </div>
-
-                <!-- Social Media Section -->
                 <div>
                     <h5>Follow Us</h5>
                     <ul style="list-style-type: none; padding: 0;">
@@ -850,51 +727,34 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                     </ul>
                 </div>
             </div>
-
-            <!-- Copyright Section -->
             <div style="border-top: 1px solid #555; padding-top: 15px; font-size: 14px;">
                 <p>&copy; <?php echo date("Y"); ?> Your Company Name. All rights reserved.</p>
             </div>
         </div>
     </footer>
-
-
-
-
-
-
-
-
-
     <script>
-        // Ensure the DOM is fully loaded before attaching event listeners
         document.addEventListener("DOMContentLoaded", function() {
-            // Handle form submission
             document.getElementById('submissionForm').addEventListener('submit', function(event) {
-                event.preventDefault(); // Prevent the default form submission
+                event.preventDefault();
 
-                const form = new FormData(this); // Get form data
+                const form = new FormData(this);
 
-                // Send the data via AJAX to submit_submissionas.php
                 fetch('submit_submissionas.php', {
                         method: 'POST',
                         body: form
                     })
-                    .then(response => response.json()) // Parse the JSON response
+                    .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            // SweetAlert for successful submission
                             Swal.fire({
                                 title: 'Submission Successful!',
                                 text: data.message,
                                 icon: 'success',
                                 confirmButtonText: 'Okay'
                             }).then(() => {
-                                // Reload the page after successful submission
-                                location.reload(); // This will refresh the page
+                                location.reload();
                             });
                         } else {
-                            // SweetAlert for error if submission fails
                             Swal.fire({
                                 title: 'Error!',
                                 text: data.message,
@@ -904,7 +764,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                         }
                     })
                     .catch(error => {
-                        // SweetAlert for any AJAX error
                         Swal.fire({
                             title: 'Error!',
                             text: 'There was an issue with your submission. Please try again.',
@@ -915,43 +774,29 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             });
         });
     </script>
-
-    <!-- progress bar  -->
     <script>
-        // Get student ID and course ID (replace with dynamic PHP variables)
-        const studentId = <?php echo $student_id; ?>;
-        const courseId = <?php echo $course_id; ?>;
-        // Show PDF content in modal
-        // Function to view the PDF in the modal
+        const studentId = <?php echo $student_id; ?>,
+            courseId = <?php echo $course_id; ?>;
+
         function viewPDF(pdfFile, title) {
             if (!pdfFile) {
                 alert("PDF file not found.");
                 return;
             }
 
-            // Set the title of the PDF modal
             document.getElementById('pdfTitle').textContent = title;
-            // Set the source for the iframe to load the PDF
             document.getElementById('pdfViewer').src = pdfFile;
-
-            // Display the modal
             document.getElementById('pdfModal').style.display = 'flex';
         }
 
-        // Function to close the modals (PDF and video)
         function closeModal() {
-            // Close both PDF and video modals
             document.getElementById('pdfModal').style.display = 'none';
             document.getElementById('videoModal').style.display = 'none';
-
-            // Reset the iframe source to stop loading the PDF
             document.getElementById('pdfViewer').src = '';
-
-            // Reset the video player (if applicable)
             document.getElementById('videoPlayer').pause();
             document.getElementById('videoPlayer').currentTime = 0;
         }
-        // Show video content in modal
+
         function showContent(title, videoFile) {
             if (!videoFile) {
                 alert("Video file not found.");
@@ -965,32 +810,11 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
         }
 
 
-
-        // Initialize the completed modules from localStorage (if any)
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
-
-        //     const buttons = document.querySelectorAll('.completion-button');
-        //     buttons.forEach(button => {
-        //         const moduleId = button.getAttribute('data-module-id');
-        //         if (completedModules.includes(moduleId)) {
-        //             button.textContent = 'Completed'; // Change button text to 'Completed'
-        //         }
-        //     });
-
-        //     updateProgressBar();
-        //     updateProgressBarModules();
-        // });
-
-        // Mark module as completed when button is clicked
         function markCompleted(event) {
             const button = event.target;
             const moduleId = button.getAttribute('data-module-id');
-
-            // Get the current list of completed modules from localStorage
             let completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
 
-            // If the button says 'Mark as Completed', mark it and update the button text
             if (button.textContent === 'Mark as Completed') {
                 completedModules.push(moduleId);
                 button.textContent = 'Completed';
@@ -999,18 +823,14 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                 button.textContent = 'Mark as Completed';
             }
 
-            // Save the updated list of completed modules to localStorage
             localStorage.setItem(`completedModules_${studentId}_${courseId}`, JSON.stringify(completedModules));
 
-            // Update progress bar
             updateProgressBar();
             updateProgressBarModules();
 
-            // Save progress to the database (AJAX request)
             saveProgressToDatabase(moduleId, completedModules);
         }
 
-        // Update progress bar (Video)
         function updateProgressBar() {
             const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
             const totalModules = document.querySelectorAll('.module').length;
@@ -1018,7 +838,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             document.getElementById('progressBar').style.width = progress + '%';
         }
 
-        // Update progress bar (PDF)
         function updateProgressBarModules() {
             const completedModules = JSON.parse(localStorage.getItem(`completedModules_${studentId}_${courseId}`)) || [];
             const totalModules = document.querySelectorAll('.module').length;
@@ -1026,14 +845,12 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             document.getElementById('progressBarModules').style.width = progress + '%';
         }
 
-        // Save progress to the database using AJAX
         function saveProgressToDatabase(moduleId, completedModules) {
             const xhr = new XMLHttpRequest();
             xhr.open('POST', 'save_progress.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {
-                    // Handle the response (e.g., display a success message)
                     console.log('Progress saved successfully!');
                 }
             };
@@ -1057,12 +874,12 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                 modalContent.innerHTML = `<video controls style="width: 100%; height: 800px;"><source src="${file}" type="video/mp4">Your browser does not support the video tag.</video>`;
             }
 
-            modal.style.display = 'block'; // Show the modal
+            modal.style.display = 'block';
         }
 
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
-            document.getElementById('modal-content').innerHTML = ''; // Clear content
+            document.getElementById('modal-content').innerHTML = '';
         }
 
         function openTab(event, tabName) {
@@ -1075,20 +892,18 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             tabs.forEach(tab => {
                 tab.classList.remove('active');
             });
-
             document.getElementById(tabName).style.display = 'block';
             event.currentTarget.classList.add('active');
 
-            // Close the modal if it's open
             closeModal();
         }
 
         function togglePostForm() {
             const postForm = document.getElementById('postForm');
             if (postForm.style.display === 'none') {
-                postForm.style.display = 'block'; // Show the form
+                postForm.style.display = 'block';
             } else {
-                postForm.style.display = 'none'; // Hide the form
+                postForm.style.display = 'none';
             }
         }
 
@@ -1120,23 +935,15 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             closeModal();
         }
     </script>
-
-
-
-
-
-    <!-- Include modal script and other functionalities -->
     <script>
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
         }
 
         function highlightTab(event) {
-            // Remove the 'active' class from all tabs
             const tabs = document.querySelectorAll('.tab');
             tabs.forEach(tab => tab.classList.remove('active'));
 
-            // Add the 'active' class to the clicked tab
             event.currentTarget.classList.add('active');
         }
     </script>

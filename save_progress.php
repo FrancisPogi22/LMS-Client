@@ -1,5 +1,4 @@
 <?php
-// Database connection
 $host     = 'localhost:3306';
 $username = 'root';
 $password = '';
@@ -10,17 +9,12 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Get data from the AJAX request
 $student_id = $_POST['student_id'];
 $course_id = $_POST['course_id'];
-$completed_modules = json_decode($_POST['completed_modules']); // Convert JSON string to PHP array
+$completed_modules = json_decode($_POST['completed_modules']);
 
-// Validate input
 if (!empty($student_id) && !empty($course_id)) {
-    // Example query to update the progress
-    $completed_modules_str = implode(',', $completed_modules); // Convert array to comma-separated string
-
-    // Insert or update the progress in the database
+    $completed_modules_str = implode(',', array: $completed_modules);
     $stmt = $conn->prepare("REPLACE INTO progress (student_id, course_id, completed_modules) VALUES (?, ?, ?)");
     $stmt->bind_param("iis", $student_id, $course_id, $completed_modules_str);
     
@@ -36,4 +30,3 @@ if (!empty($student_id) && !empty($course_id)) {
 }
 
 $conn->close();
-?>

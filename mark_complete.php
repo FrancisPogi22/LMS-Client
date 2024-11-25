@@ -24,7 +24,7 @@ if ($completed) {
     $stmt->execute([$student_id, $module_id]);
 }
 
-$course_id = $_GET['course_id']; // adjust if needed to fetch the course ID from a session or passed variable
+$course_id = $_GET['course_id'];
 $stmt = $pdo->prepare("SELECT COUNT(*) FROM modules WHERE course_id = ?");
 $stmt->execute([$course_id]);
 $total_modules = $stmt->fetchColumn();

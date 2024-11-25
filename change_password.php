@@ -44,64 +44,10 @@ if (isset($_POST['change_password'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Change Password</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <style>
-        .change-password-form {
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-
-        .change-password-form h2 {
-            text-align: center;
-        }
-
-        .change-password-form input[type="password"],
-        .change-password-form button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-        }
-
-        .success,
-        .error {
-            text-align: center;
-            margin-top: 10px;
-        }
-
-        .success {
-            color: green;
-        }
-
-        .error {
-            color: red;
-        }
-
-        .button-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .button-link a {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-
-        .button-link a:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <link rel="stylesheet" href="./assets/change_pass.css">
 </head>
 
 <body>
-
     <div class="change-password-form">
         <h2>Change Password</h2>
         <?php if (!empty($message)): ?>
@@ -109,20 +55,15 @@ if (isset($_POST['change_password'])) {
                 <?php echo $message; ?>
             </p>
         <?php endif; ?>
-
         <form action="change_password.php" method="POST">
             <label for="current_password">Current Password</label>
             <input type="password" id="current_password" name="current_password" required>
-
             <label for="new_password">New Password</label>
             <input type="password" id="new_password" name="new_password" required>
-
             <label for="confirm_password">Confirm New Password</label>
             <input type="password" id="confirm_password" name="confirm_password" required>
-
             <button type="submit" name="change_password">Update Password</button>
         </form>
-
         <div class="button-link">
             <a href="profile_students.php">Go Back</a>
         </div>
@@ -136,7 +77,7 @@ if (isset($_POST['change_password'])) {
                 text: 'Your password has been updated successfully.',
                 confirmButtonText: 'OK'
             }).then(function() {
-                window.location.href = 'change_password.php'; // Redirect after clicking OK
+                window.location.href = 'change_password.php';
             });
         <?php elseif (isset($is_success) && !$is_success): ?>
             Swal.fire({

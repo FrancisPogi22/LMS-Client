@@ -1,23 +1,19 @@
 <?php
-// Include database connection file
 require 'db_connection.php';
-session_start(); // Start a session
+session_start();
 
-// Check if instructor is logged in
 if (!isset($_SESSION['instructor_id'])) {
-    header("Location: instructor_login.php"); // Redirect to login if not logged in
+    header("Location: instructor_login.php");
     exit();
 }
 
 $instructor_id = $_SESSION['instructor_id'];
 
-// Fetch courses assigned to the instructor
 $courses = $pdo->prepare("SELECT * FROM courses WHERE instructor_id = ?");
 $courses->execute([$instructor_id]);
 $courses = $courses->fetchAll(PDO::FETCH_ASSOC);
-
-// Fetch students enrolled in each course
 $students_by_course = [];
+
 foreach ($courses as $course) {
     $course_id = $course['id'];
     $students = $pdo->prepare("SELECT s.id, s.name FROM students s 
@@ -27,7 +23,6 @@ foreach ($courses as $course) {
     $students_by_course[$course_id] = $students->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Fetch modules or content related to each course
 $modules_by_course = [];
 foreach ($courses as $course) {
     $course_id = $course['id'];
@@ -36,13 +31,10 @@ foreach ($courses as $course) {
     $modules_by_course[$course_id] = $modules->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Handle sending assessment
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_assessment'])) {
     $course_id = $_POST['course_id'];
     $assessment_title = htmlspecialchars($_POST['assessment_title']);
     $assessment_description = htmlspecialchars($_POST['assessment_description']);
-
-    // Save the assessment to the database
     $insert_assessment = $pdo->prepare("INSERT INTO assessments (course_id, instructor_id, assessment_title, assessment_description, created_at) 
                                          VALUES (?, ?, ?, ?, NOW())");
     $insert_assessment->execute([$course_id, $instructor_id, $assessment_title, $assessment_description]);
@@ -50,12 +42,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_assessment'])) {
     echo "<script>alert('Assessment sent successfully for course ID: $course_id');</script>";
 }
 
-// Handle feedback submission for assessments
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_feedback'])) {
     $submission_id = $_POST['submission_id'];
     $feedback_text = htmlspecialchars($_POST['feedback_text']);
-
-    // Save feedback to the database
     $insert_feedback = $pdo->prepare("INSERT INTO assessment_feedback (submission_id, user_id, user_type, comment, created_at) 
                                        VALUES (?, ?, 'instructor', ?, NOW())");
     $insert_feedback->execute([$submission_id, $instructor_id, $feedback_text]);
@@ -63,7 +52,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_feedback'])) {
     echo "<script>alert('Feedback submitted successfully for submission ID: $submission_id');</script>";
 }
 
-// Fetch feedback for each assessment submission
 $feedback_by_submission = [];
 foreach ($courses as $course) {
     $course_id = $course['id'];
@@ -78,6 +66,7 @@ foreach ($courses as $course) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Instructor Dashboard</title>
@@ -88,10 +77,12 @@ foreach ($courses as $course) {
             margin: 0;
             padding: 20px;
         }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
         }
+
         .course {
             background-color: #fff;
             border: 1px solid #ddd;
@@ -100,32 +91,49 @@ foreach ($courses as $course) {
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
+
         .course h3 {
             margin: 0 0 10px;
             color: #333;
         }
+
         .course p {
             color: #666;
         }
-        .students, .modules, .assessment-form, .feedback-form {
+
+        .students,
+        .modules,
+        .assessment-form,
+        .feedback-form {
             margin-top: 10px;
             padding: 10px;
             background-color: #f9f9f9;
             border: 1px solid #ddd;
             border-radius: 5px;
         }
-        .students h4, .modules h4, .assessment-form h4, .feedback-form h4 {
+
+        .students h4,
+        .modules h4,
+        .assessment-form h4,
+        .feedback-form h4 {
             margin: 0;
         }
-        .student, .module {
+
+        .student,
+        .module {
             padding: 5px 0;
         }
-        .assessment-form input, .assessment-form textarea, .feedback-form input, .feedback-form textarea {
+
+        .assessment-form input,
+        .assessment-form textarea,
+        .feedback-form input,
+        .feedback-form textarea {
             display: block;
             margin: 5px 0;
             width: 100%;
             padding: 8px;
         }
+
         .submission {
             margin-top: 10px;
             padding: 10px;
@@ -135,18 +143,17 @@ foreach ($courses as $course) {
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h2>Welcome, <?php echo htmlspecialchars($_SESSION['instructor_name']); ?></h2>
-        
+
         <h2>Your Courses</h2>
         <?php if (count($courses) > 0): ?>
             <?php foreach ($courses as $course): ?>
                 <div class="course">
                     <h3><?php echo htmlspecialchars($course['course_name']); ?></h3>
                     <p><?php echo htmlspecialchars($course['course_description']); ?></p>
-
-                    <!-- Display enrolled students -->
                     <div class="students">
                         <h4>Enrolled Students:</h4>
                         <?php
@@ -158,8 +165,6 @@ foreach ($courses as $course) {
                             <div class='student'>No students enrolled in this course.</div>
                         <?php } ?>
                     </div>
-
-                    <!-- Display course modules -->
                     <div class="modules">
                         <h4>Course Content:</h4>
                         <?php
@@ -171,8 +176,6 @@ foreach ($courses as $course) {
                             <div class='module'>No content available for this course.</div>
                         <?php } ?>
                     </div>
-
-                    <!-- Assessment Sending Form -->
                     <div class="assessment-form">
                         <h4>Send Assessment:</h4>
                         <form method="POST" action="">
@@ -184,8 +187,6 @@ foreach ($courses as $course) {
                             <input type="submit" name="send_assessment" value="Send Assessment">
                         </form>
                     </div>
-
-                    <!-- Display Assessment Submissions -->
                     <div class="submissions">
                         <h4>Assessment Submissions:</h4>
                         <?php
@@ -212,9 +213,6 @@ foreach ($courses as $course) {
             <p>No courses available.</p>
         <?php endif; ?>
     </div>
-
-
-
-    
 </body>
+
 </html>

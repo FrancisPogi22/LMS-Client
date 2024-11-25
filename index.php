@@ -27,7 +27,6 @@
       </div>
     </div>
   </section>
-
   <script>
     const buttons = document.querySelectorAll('.role-button, .student-btn');
     buttons.forEach(button => {
