@@ -5,31 +5,45 @@ session_start();
 
 $message = '';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = htmlspecialchars($_POST['email']);
-    $access_code = htmlspecialchars($_POST['code']);
+// Flags for SweetAlert conditions
+$incorrect_login = false;
+$account_pending = false;
+$invalid_password = false;
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $email = htmlspecialchars(trim($_POST['email']));
+    $access_code = htmlspecialchars(trim($_POST['code']));
     $password = $_POST['password'];
+
+    // Use prepared statement to prevent SQL injection
     $stmt = $pdo->prepare("SELECT * FROM students WHERE email = ? AND code = ?");
     $stmt->execute([$email, $access_code]);
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($student) {
         if ($student['approved'] == 1) {
+            // Check password with case sensitivity using password_verify
             if (password_verify($password, $student['password'])) {
+                // Store necessary session variables
                 $_SESSION['student_id'] = $student['id'];
                 $_SESSION['student_username'] = $student['username'];
                 $_SESSION['student_name'] = $student['name'];
                 $_SESSION['student_email'] = $student['email'];
+                
+                // Redirect to student courses page
                 header("Location: Student_courses.php");
                 exit();
             } else {
-                $message = "<p style='color:red;'>Invalid password.</p>";
+                // Flag for invalid password
+                $invalid_password = true;
             }
         } else {
-            $message = "<p style='color:red;'>Your account is pending approval by the admin. Please try again later.</p>";
+            // Flag for account pending approval
+            $account_pending = true;
         }
     } else {
-        $message = "<p style='color:red;'>Account not found. Check your email and access code.</p>";
+        // Flag for incorrect login (email or code not found)
+        $incorrect_login = true;
     }
 }
 ?>
@@ -43,6 +57,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Student Login</title>
     <link rel="stylesheet" href="./assets/theme.css">
     <link rel="stylesheet" href="./assets/student_login.css">
+    
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            color: #888;
+        }
+    </style>
 </head>
 
 <body>
@@ -57,15 +90,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <form method="POST" action="">
                         <div class="field-container">
                             <label for="email">Email:</label>
-                            <input type="text" id="email" name="email" placeholder="Enter email" required>
+                            <input type="email" id="email" name="email" placeholder="Enter email" required>
                         </div>
                         <div class="field-container">
                             <label for="code">Access Code:</label>
                             <input type="text" id="code" name="code" placeholder="Enter code" required>
                         </div>
-                        <div class="field-container">
+                        <div class="field-container password-container">
                             <label for="password">Password:</label>
-                            <input type="password" id="password" name="password" placeholder="Enter password" required>
+                            <input type="password" id="password" name="password" placeholder="Enter password" required><br>
+                            <span class="toggle-password" onclick="togglePassword()">👁️</span>
                         </div>
                         <div class="btn-container">
                             <button type="submit" class="btn-primary">Login</button>
@@ -80,7 +114,50 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     </section>
 
+    <script>
+        function togglePassword() {
+            const passwordField = document.getElementById("password");
+            const toggleIcon = document.querySelector(".toggle-password");
 
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggleIcon.textContent = "👁"; // Change icon to 'hide' style
+            } else {
+                passwordField.type = "password";
+                toggleIcon.textContent = "👁️"; // Change icon to 'show' style
+            }
+        }
+
+        // Check if flags are set by PHP for login errors
+        <?php if ($incorrect_login): ?>
+            window.onload = function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Account not found',
+                    text: 'Please check your email and access code.',
+                    confirmButtonText: 'Ok'
+                });
+            };
+        <?php elseif ($invalid_password): ?>
+            window.onload = function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Password',
+                    text: 'The password you entered is incorrect.',
+                    confirmButtonText: 'Ok'
+                });
+            };
+        <?php elseif ($account_pending): ?>
+            window.onload = function() {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Account Pending Approval',
+                    text: 'Your account is pending approval by the admin. Please try again later.',
+                    confirmButtonText: 'Ok'
+                });
+            };
+        <?php endif; ?>
+    </script>
 </body>
 
 </html>

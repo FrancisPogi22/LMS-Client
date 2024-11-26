@@ -1,4 +1,5 @@
 <?php
+// Include your database connection here
 include 'db_connection.php';
 
 $stmt = $pdo->query("SELECT * FROM instructors");

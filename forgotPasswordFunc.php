@@ -54,7 +54,7 @@ function forgotPassword($userEmail, $role)
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'francistengteng10@gmail.com';
+        $mail->Username = 'hatake920143@gamail.com';
         $mail->Password = 'ayug qjpx tqdy wraj';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = 465;

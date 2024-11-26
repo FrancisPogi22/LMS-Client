@@ -5,3 +5,4 @@ session_destroy();
 
 header("Location: instructor_login.php");
 exit();
+?>

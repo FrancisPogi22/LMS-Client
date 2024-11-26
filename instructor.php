@@ -111,14 +111,16 @@ function getStudentProgress($student_id, $course_id, $pdo)
 
 if (isset($_POST['submit_post_comment'])) {
     $assessment_id = $_POST['assessment_id'];
+    $instructor_id = $_POST['instructor_id'];
     $comment = trim($_POST['comment']);
     $student_id = $_POST['student_id'];
 
     if (!empty($comment)) {
-        $stmt = $pdo->prepare("INSERT INTO comments (post_id, student_id, content, created_at) 
-                               VALUES (:post_id, :student_id, :content, NOW())");
+        $stmt = $pdo->prepare("INSERT INTO comments (post_id, student_id, instructor_id, content, created_at) 
+                               VALUES (:post_id, :student_id, :instructor_id, :content, NOW())");
 
         $stmt->execute([
+            ':instructor_id' => $instructor_id,
             ':post_id' => $assessment_id,
             ':student_id' => $student_id,
             ':content' => $comment
@@ -338,6 +340,12 @@ if (isset($_POST['submit_post_comment'])) {
                 </section>
 
                 <section id="progress" class="tab-content hidden">
+
+                    <?php $sql = "SELECT id, name, profile_pic FROM students WHERE approved = 1";  // Adjust condition as necessary
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute();
+                    $students = $stmt->fetchAll();
+                    ?>
                     <?php
                     foreach ($courses as $course):
                         $students_by_course = $pdo->prepare("SELECT * FROM enrollments JOIN students ON students.id = enrollments.student_id JOIN courses ON courses.id = enrollments.course_id WHERE course_id = ?");
@@ -354,6 +362,7 @@ if (isset($_POST['submit_post_comment'])) {
                                         <th>Progress</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
                                     <?php foreach ($students as $student): ?>
                                         <tr class="student-item" data-name="<?php echo strtolower($student['name']); ?>">
@@ -382,6 +391,73 @@ if (isset($_POST['submit_post_comment'])) {
                     </tbody>
                 </section>
                 <section id="evaluate" class="tab-content hidden">
+                    <!-- Button to trigger the "Uploaded Assessments" modal -->
+                    <button id="uploaded-assessments-btn" class="btn-primary" onclick="showUploadedAssessmentsModal()">Uploaded Assessments</button>
+
+                    <!-- Modal for displaying Uploaded Assessments -->
+                    <div id="uploaded-assessments-modal" class="modal">
+                        <div class="modal-content">
+                            <div class="close-container">
+                                <a href="#" class="modal-close">
+                                    <i class="bi bi-chevron-left"></i>
+                                    <span>Back</span>
+                                </a>
+                            </div>
+                            <h4>Uploaded Assessments</h4>
+
+                            <!-- Display Assessments for the specific Instructor -->
+                            <div id="uploaded-assessments-list">
+                                <?php
+                                // Get the instructor's assessments
+                                $instructor_id = $_SESSION['instructor_id'];
+
+                                try {
+                                    // Query to get assessments ordered by the latest created_at
+                                    $stmt = $pdo->prepare("
+                                        SELECT * 
+                                        FROM assessments 
+                                        WHERE instructor_id = :instructor_id 
+                                        ORDER BY created_at DESC
+                                    ");
+                                    $stmt->bindParam(':instructor_id', $instructor_id, PDO::PARAM_INT);
+                                    $stmt->execute();
+                                    $assessments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                                    if ($assessments) {
+                                        foreach ($assessments as $assessment) {
+                                            echo "<div class='assessment-item'>";
+                                            echo "<p><strong>Title:</strong> " . htmlspecialchars($assessment['assessment_title']) . "</p>";
+                                            echo "<p><strong>Description:</strong> " . nl2br(htmlspecialchars($assessment['assessment_description'])) . "</p>";
+                                            echo "<p><small>Created at: " . $assessment['created_at'] . "</small></p>";
+                                            echo "</div>";
+                                        }
+                                    } else {
+                                        echo "<p>No uploaded assessments found.</p>";
+                                    }
+                                } catch (PDOException $e) {
+                                    echo "Error: " . $e->getMessage();
+                                }
+                                ?>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        // Function to show the "Uploaded Assessments" modal
+                        function showUploadedAssessmentsModal() {
+                            document.getElementById('uploaded-assessments-modal').style.display = 'block';
+                        }
+
+                        // Function to close the modal when the close button is clicked
+                        document.querySelectorAll('.modal-close').forEach(button => {
+                            button.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                document.getElementById('uploaded-assessments-modal').style.display = 'none';
+                            });
+                        });
+                    </script>
+                    <br>
+
+
                     <div class="assessment-form" id="assessment-form" style="display: none;">
                         <h4>Send Assessment:</h4>
                         <form method="POST" action="">
@@ -447,12 +523,11 @@ if (isset($_POST['submit_post_comment'])) {
                                             data-student-name="<?php echo htmlspecialchars($assessment['student_name']); ?>"
                                             data-submission-text="<?php echo htmlspecialchars($assessment['submission_text']); ?>"
                                             data-created-at="<?php echo htmlspecialchars($assessment['created_at']); ?>"
-                                            data-submission-id="<?php echo htmlspecialchars($assessment['id']); ?>"
                                             data-assessment-link="./uploads/<?php echo $assessment['submission_text']; ?>">
-                                            <h4>Send Feedback</h4>
+                                            <h4 class="feedback-title">Send Feedback</h4>
                                         </a>
-                                        <a href="#" class="comment-btn"
-                                            <h4>View Comment</h4>
+                                        <a href="#" class="comment-btn">
+                                            <h4 class="comment-title">View Comment</h4>
                                         </a>
                                     </div>
                                 </div>
@@ -464,31 +539,58 @@ if (isset($_POST['submit_post_comment'])) {
                                                 <span>Back</span>
                                             </a>
                                         </div>
-
-                                        <h4>Assessment Content</h4>
                                         <?php
-                                        if (!empty($assessments)) {
-                                            foreach ($assessments as $assessment) {
+                                        // Prepare and execute the query to get comments for the specific assessment
+                                        $stmt = $pdo->prepare("
+                                            SELECT 
+                                                content,
+                                                created_at,
+                                                instructor_id
+                                            FROM 
+                                                comments
+                                            WHERE 
+                                                post_id = ?
+                                        ");
+                                        $stmt->execute([$assessment['id']]);
+                                        $assessmentsWithComments = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         ?>
-                                                <div class="assessment-content">
+
+                                        <h4>Comments</h4>
+
+                                        <?php
+                                        if (!empty($assessmentsWithComments)) {
+                                        ?>
+                                            <div class="assessment-content">
+                                                <?php foreach ($assessmentsWithComments as $comment) { ?>
                                                     <div class="comment-widget">
-                                                        <?php if (!empty($assessment['content'])): ?>
-                                                            <p><?php echo nl2br(htmlspecialchars($assessment['content'])); ?></p>
-                                                            <span><?php echo date('F d, Y', strtotime($assessment['created_at'])); ?></span>
+                                                        <?php
+                                                        if (!empty($comment['instructor_id'])) {
+                                                            $instructorStmt = $pdo->prepare("SELECT name FROM instructors WHERE id = ?");
+                                                            $instructorStmt->execute([$comment['instructor_id']]);
+                                                            $instructor = $instructorStmt->fetch(PDO::FETCH_ASSOC);
+
+                                                            // Display "Sent by Instructor" with the instructor's name
+                                                            echo "<p><strong>Sent by Instructor: " . htmlspecialchars($instructor['name']) . "</strong></p>";
+                                                        }
+                                                        ?>
+                                                        <!-- Display the comment content -->
+                                                        <?php if (!empty($comment['content'])): ?>
+                                                            <p><?php echo nl2br(htmlspecialchars($comment['content'])); ?></p>
+                                                            <span><?php echo date('F d, Y', strtotime($comment['created_at'])); ?></span>
                                                         <?php else: ?>
-                                                            <p>No content available for this assessment.</p>
+                                                            <p>No content available for this comment.</p>
                                                         <?php endif; ?>
                                                     </div>
-                                                </div>
+                                                <?php } ?>
+                                            </div>
                                         <?php
-                                            }
                                         } else {
-                                            echo "<p>No assessments available for this course.</p>";
+                                            echo "<p>No comments available for this assessment.</p>";
                                         }
                                         ?>
-
                                         <p><strong>Add a Comment</strong></p>
                                         <form action="" method="POST">
+                                            <input type="hidden" name="instructor_id" value="<?php echo htmlspecialchars($_SESSION['instructor_id']); ?>">
                                             <input type="hidden" name="student_id" value="<?php echo htmlspecialchars($assessment['student_id']); ?>">
                                             <input type="hidden" name="assessment_id" id="assessment_id" value="<?php echo htmlspecialchars($assessment['id']); ?>">
                                             <textarea name="comment" id="comment-text" cols="30" rows="10" required></textarea>
@@ -513,7 +615,7 @@ if (isset($_POST['submit_post_comment'])) {
                                         </div>
                                         <p><strong>Add comment</strong></p>
                                         <form action="submit_comment.php" method="POST">
-                                            <input type="text" name="assessment_id" id="assessment_id" hidden>
+                                            <input type="text" name="assessment_id" id="assessment_id" value="<?php echo $assessment['id'] ?>" hidden>
                                             <textarea name="comment" id="comment-text" cols="30" rows="10"></textarea>
                                             <button type="submit" name="submit_comment" class="btn-primary" style="float: right;background: #2563eb;">
                                                 <i class="bi bi-send-fill"></i>
@@ -526,9 +628,53 @@ if (isset($_POST['submit_post_comment'])) {
                         <?php else: ?>
                             <p>No assessments available.</p>
                         <?php endif; ?>
+                        <style>
+                            /* Hover effect for feedback-title */
+                            .feedback-title:hover {
+                                color: #2563eb;
+                                /* Changes text color to blue on hover */
+                                cursor: pointer;
+                                /* Shows a pointer cursor */
+                                text-decoration: underline;
+                                /* Underlines the text */
+                            }
+
+                            /* Hover effect for comment-title */
+                            .comment-title:hover {
+                                color: #4caf50;
+                                /* Changes text color to green on hover */
+                                cursor: pointer;
+                                /* Shows a pointer cursor */
+                                text-decoration: underline;
+                                /* Underlines the text */
+                            }
+
+                            /* Styling for the "Send Feedback" title */
+                            .feedback-title {
+                                font-size: 1.2em;
+                                /* Larger font size */
+                                font-weight: bold;
+                                /* Bold font */
+                                color: #2563eb;
+                                /* Blue color */
+                                margin-bottom: 10px;
+                                /* Space below the title */
+                            }
+
+                            /* Styling for the "View Comment" title */
+                            .comment-title {
+                                font-size: 1.2em;
+                                /* Larger font size */
+                                font-weight: bold;
+                                /* Bold font */
+                                color: #4caf50;
+                                /* Green color */
+                                margin-bottom: 10px;
+                                /* Space below the title */
+                            }
+                        </style>
                     </div>
                 </section>
-
             </div>
         </div>
     </section>
@@ -634,15 +780,12 @@ if (isset($_POST['submit_post_comment'])) {
                 const studentName = this.getAttribute('data-student-name');
                 const submissionText = this.getAttribute('data-submission-text');
                 const createdAt = this.getAttribute('data-created-at');
-                const submissionId = this.getAttribute('data-submission-id');
                 const assessmentLink = this.getAttribute('data-assessment-link');
 
                 document.getElementById('student_name').textContent = studentName;
                 document.getElementById('assessment-link').href = assessmentLink;
                 document.getElementById('assessment-link').textContent = submissionText;
                 document.getElementById("assessmentModal").style.display = "block";
-                document.getElementById("assessment_id").value = submissionId;
-
             });
         });
     </script>

@@ -4,6 +4,7 @@ include 'db_connection.php';
 if (isset($_GET['course_id'])) {
     $course_id = $_GET['course_id'];
 
+    // Fetch students enrolled in the selected course
     $stmt = $pdo->prepare("
         SELECT s.id, s.name 
         FROM students s 
