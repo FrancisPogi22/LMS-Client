@@ -1,5 +1,6 @@
 <?php
 session_start(); // Start the session
+require 'getProgress.php';
 
 // Database connection
 $host = 'localhost';
@@ -112,21 +113,6 @@ $completed_modules = $pdo->prepare("SELECT module_id FROM completed_modules WHER
 $completed_modules->execute([$student_id]);
 $completed_modules = $completed_modules->fetchAll(PDO::FETCH_COLUMN);
 
-// Handle module completion
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['module_id'])) {
-    $module_id = $_POST['module_id'];
-
-    // Check if the module is already marked as completed
-    if (!in_array($module_id, $completed_modules)) {
-        $insert = $pdo->prepare("INSERT INTO completed_modules (student_id, module_id) VALUES (?, ?)");
-        $insert->execute([$student_id, $module_id]);
-    }
-
-    // Refresh the page to update progress bar and module completion status
-    header("Location: courses.php?course_id=$course_id");
-    exit;
-}
-
 function getStudentProgress($student_id, $course_id, $pdo, $action)
 {
     try {
@@ -158,10 +144,7 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
         return 0;
     }
 }
-
 ?>
-
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -207,18 +190,15 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             <h2><?php echo htmlspecialchars($course['course_name']); ?></h2>
         </div>
     </header>
-
-
-
     <div class="tabs">
         <div class="tab active" onclick="openTab(event, 'overviewTab')">Overview</div>
         <div class="tab" onclick="openTab(event, 'contentTab')">Content</div>
         <div class="tab" onclick="openTab(event, 'modulesTab')">Modules</div>
         <div class="tab" onclick="openTab(event, 'forumTab')">Forum</div>
         <div class="tab" onclick="openTab(event, 'assessmentTab')">Assessment</div>
+        <div class="tab" onclick="openTab(event, 'modules')">Modules</div>
         <div class="tab" onclick="openTab(event, 'certificateTab')">E-Certificates</div>
     </div>
-
     <script>
         // Function to handle tab switching
         function openTab(event, tabName) {
@@ -299,8 +279,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             <p style="text-align: center; font-size: 16px; color: #555;">No certificates available for this course.</p>
         <?php endif; ?>
     </div>
-
-
     <!-- Overview Tab -->
     <div id="overviewTab" class="tab-content active">
         <h3>Overview</h3>
@@ -319,10 +297,109 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             <p><strong>Gender:</strong> <?php echo htmlspecialchars($course['gender']); ?></p>
         </div>
     </div>
+    <div id="modules" class="tab-content">
+        <div class="tab-progress-container">
+            <div id="progressContainerModules" style="margin-top: 20px; width: 100%; margin-bottom: 20px;">
+                <?php $progress = getProgress($student_id, $course_id, $pdo); ?>
+                <label for="progressBarModules" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
+                <svg width="100" height="100" viewBox="0 0 36 36" class="circular-chart">
+                    <path class="circle-background"
+                        stroke="#f3f3f3" stroke-width="3" fill="none"
+                        d="M18 2.0845 a 15.915 15.915 0 0 1 0 31.83 a 15.915 15.915 0 0 1 0 -31.83" />
+                    <path class="circle-progress"
+                        stroke="#4caf50" stroke-width="3" fill="none"
+                        stroke-dasharray="<?php echo $progress; ?>, 100"
+                        d="M18 2.0845 a 15.915 15.915 0 0 1 0 31.83 a 15.915 15.915 0 0 1 0 -31.83" />
+                </svg>
+                <p class="progress-label"><?php echo $progress; ?>%</p>
+            </div>
+        </div>
+        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Modules (PDF)</h3>
+        <div class="uploaded-modules" style="list-style-type: none; padding: 0; margin-top: 10px;">
+            <?php if (empty($modules)): ?>
+                <p>No PDF files available for this course yet.</p>
+            <?php else: ?>
+                <?php foreach ($modules as $module): ?>
+                    <div class="module" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #ddd;">
+                        <div class="module-box" style="border: 1px solid black; border-radius: 8px; padding: 10px; width: 100%; margin-bottom: 10px;">
+                            <div class="module-title" style="font-size: 14px; font-weight: bold; color: #333; flex: 1;">
+                                <?php echo htmlspecialchars($module['title']); ?>
+                            </div><br>
+                            <button onclick="viewPDF('<?php echo htmlspecialchars($module['module_file']); ?>', '<?php echo htmlspecialchars($module['title']); ?>')" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">View Modules</button>
+                            <?php if (in_array($module['id'], $completed_modules)): ?>
+                                <button class="completion-status" style="padding: 5px 8px; 
+                                    background-color: #007bff; 
+                                    color: white; 
+                                    border: none; 
+                                    border-radius: 4px; 
+                                    cursor: not-allowed; 
+                                    font-size: 12px;" disabled>Completed</button>
+                            <?php else: ?>
+                                <button type="button" class="completion-button" onclick="markAsComplete(<?php echo htmlspecialchars($module['id']); ?>, this)" class="completion-button" style="padding: 5px 8px; 
+                                        background-color: #007bff; 
+                                        color: white; 
+                                        border: none; 
+                                        border-radius: 4px; 
+                                        cursor: pointer; 
+                                        font-size: 12px;">Mark as Complete</button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </div>
 
+    <script>
+        function markAsComplete(moduleId, button) {
+            const studentId = <?php echo json_encode($student_id); ?>;
 
+            button.disabled = true;
+            button.textContent = "Processing...";
 
-    <!-- Tab Navigation -->
+            fetch('complete_module.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        module_id: moduleId,
+                        student_id: studentId,
+                        course_id: <?php echo json_encode($course_id); ?>,
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        button.textContent = "Completed";
+                        button.classList.add('completion-status');
+                        button.classList.remove('completion-button');
+                        button.disabled = true;
+
+                        const progress = data.progress;
+                        const progressBar = document.querySelector('.circle-progress');
+                        const progressLabel = document.querySelector('.progress-label');
+
+                        if (progressBar) {
+                            progressBar.style.strokeDasharray = `${progress}, 100`;
+                        }
+
+                        if (progressLabel) {
+                            progressLabel.textContent = `${progress}%`;
+                        }
+                    } else {
+                        button.textContent = "Mark as Complete";
+                        button.disabled = false;
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    button.textContent = "Mark as Complete";
+                    button.disabled = false;
+                });
+        }
+    </script>
 
     <!-- Modules Tab -->
     <div id="modulesTab" class="tab-content">
@@ -760,54 +837,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                         </div>
                     <?php else: ?>
                         <?php
-                        function handleAssignmentUpload($pdo, $course_id, $student_id, $assessment_id)
-                        {
-                            if (isset($_FILES['post_file']) && $_FILES['post_file']['error'] === UPLOAD_ERR_OK) {
-                                $fileTmpPath = $_FILES['post_file']['tmp_name'];
-                                $fileName = $_FILES['post_file']['name'];
-                                $fileSize = $_FILES['post_file']['size'];
-                                $fileType = $_FILES['post_file']['type'];
-
-                                $allowedFileTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-                                $uploadDir = 'uploads/';
-
-                                if (!in_array($fileType, $allowedFileTypes)) {
-                                    return "Invalid file type. Only PDF and DOCX files are allowed.";
-                                }
-
-                                $newFileName = uniqid() . '-' . basename($fileName);
-
-                                if (move_uploaded_file($fileTmpPath, $uploadDir . $newFileName)) {
-                                    if (!$course_id || !$student_id || !$assessment_id) {
-                                        return "Missing required input data: course_id, student_id, or assessment_id.";
-                                    }
-
-                                    $stmt = $pdo->prepare("
-                                        INSERT INTO assessment_submissions 
-                                        (assessment_id, student_id, course_id, submission_text, created_at) 
-                                        VALUES (:assessment_id, :student_id, :course_id, :submission_text, NOW())
-                                    ");
-
-                                    if (!$stmt->execute([
-                                        ':assessment_id' => $assessment_id,
-                                        ':student_id' => $student_id,
-                                        ':course_id' => $course_id,
-                                        ':submission_text' => $newFileName,
-                                    ])) {
-                                        return "Failed to insert into database: " . implode(" | ", $stmt->errorInfo());
-                                    }
-
-                                    return "Assignment uploaded and saved successfully.";
-                                } else {
-                                    return "There was an error moving the uploaded file.";
-                                }
-                            } else {
-                                return "No file was uploaded or an error occurred.";
-                            }
-                        }
-
-                        ?>
-                        <?php
                         if (isset($_POST['send_assessment'])) {
                             $course_id = $_GET['course_id'] ?? null;
                             $student_id =  $_SESSION['student_id'];
@@ -977,6 +1006,54 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
         else: ?>
             <p>No assessments available for this course.</p>
         <?php endif; ?>
+
+        <?php
+        function handleAssignmentUpload($pdo, $course_id, $student_id, $assessment_id)
+        {
+            if (isset($_FILES['post_file']) && $_FILES['post_file']['error'] === UPLOAD_ERR_OK) {
+                $fileTmpPath = $_FILES['post_file']['tmp_name'];
+                $fileName = $_FILES['post_file']['name'];
+                $fileSize = $_FILES['post_file']['size'];
+                $fileType = $_FILES['post_file']['type'];
+
+                $allowedFileTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                $uploadDir = 'uploads/';
+
+                if (!in_array($fileType, $allowedFileTypes)) {
+                    return "Invalid file type. Only PDF and DOCX files are allowed.";
+                }
+
+                $newFileName = uniqid() . '-' . basename($fileName);
+
+                if (move_uploaded_file($fileTmpPath, $uploadDir . $newFileName)) {
+                    if (!$course_id || !$student_id || !$assessment_id) {
+                        return "Missing required input data: course_id, student_id, or assessment_id.";
+                    }
+
+                    $stmt = $pdo->prepare("
+                            INSERT INTO assessment_submissions 
+                            (assessment_id, student_id, course_id, submission_text, created_at) 
+                            VALUES (:assessment_id, :student_id, :course_id, :submission_text, NOW())
+                        ");
+
+                    if (!$stmt->execute([
+                        ':assessment_id' => $assessment_id,
+                        ':student_id' => $student_id,
+                        ':course_id' => $course_id,
+                        ':submission_text' => $newFileName,
+                    ])) {
+                        return "Failed to insert into database: " . implode(" | ", $stmt->errorInfo());
+                    }
+
+                    return "Assignment uploaded and saved successfully.";
+                } else {
+                    return "There was an error moving the uploaded file.";
+                }
+            } else {
+                return "No file was uploaded or an error occurred.";
+            }
+        }
+        ?>
     </div>
     <div id="modal" class="modal">
         <div class="modal-header">
@@ -1024,14 +1101,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             </div>
         </div>
     </footer>
-
-
-
-
-
-
-
-
 
     <script>
         // Ensure the DOM is fully loaded before attaching event listeners

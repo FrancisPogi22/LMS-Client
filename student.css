@@ -17,7 +17,6 @@ header {
   padding: 0 20px;
 }
 
-
 .logo img {
   height: 40px; /* Adjust as needed */
 }
@@ -856,4 +855,17 @@ nav ul li a {
 }
 .button1:hover {
   background-color: #0dcf6e;
+}
+.circular-chart {
+  transform: rotate(-90deg);
+  transition: transform 0.3s ease;
+}
+
+.circle-background,
+.circle-progress {
+  transition: stroke-dasharray 0.5s ease, stroke 0.5s ease;
+}
+
+.circle-progress {
+  stroke-dasharray: 0, 100; /* Default progress (0%) */
 }

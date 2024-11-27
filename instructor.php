@@ -145,6 +145,8 @@ if (isset($_POST['submit_post_comment'])) {
     <link rel="stylesheet" type="text/css" href="instructor.css">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.1/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.1/dist/sweetalert2.all.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="./assets/theme.css">
     <style>
         .assessment-content .comment-widget {
@@ -326,21 +328,204 @@ if (isset($_POST['submit_post_comment'])) {
                     <button onclick="showTabContent('progress', event)">MY LEARNERS</button>
                     <button onclick="showTabContent('evaluate', event)">EVALUATE</button>
                 </section>
-                <section id="assigned-course" class="tab-content ">
+                <section id="assigned-course" class="tab-content">
                     <?php if (count($courses) > 0): ?>
                         <?php foreach ($courses as $course): ?>
                             <div class="course">
                                 <h3 class="course-title"><?php echo htmlspecialchars($course['course_name']); ?></h3>
                                 <p class="course-description"><?php echo htmlspecialchars($course['course_description']); ?></p>
+                                <button type="button" class="btn-primary" data-bs-toggle="modal" data-bs-target="#quizModal" data-id="<?php echo $course['id'] ?>">
+                                    View Quiz
+                                </button>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <p>No courses available.</p>
                     <?php endif; ?>
                 </section>
+                <div class="modal fade" id="quizModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Loading...</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn-primary save-quiz" style="display: none;">Save changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    $(document).ready(() => {
+                        $('[data-bs-target="#quizModal"]').on('click', function() {
+                            const courseId = $(this).data('id'),
+                                modalBody = $('#quizModal .modal-body'),
+                                saveQuizButton = $('.save-quiz');
+                            modalBody.html('<p>Loading...</p>');
+                            saveQuizButton.hide();
+
+                            $.ajax({
+                                url: 'get_quiz.php',
+                                method: 'GET',
+                                dataType: 'json',
+                                data: {
+                                    course_id: courseId
+                                },
+                                success(response) {
+                                    if (response.error) {
+                                        modalBody.html(`
+                                            <form id="quizForm">
+                                                <h4>Create Quiz</h4>
+                                                <label for="quizTitle">Quiz Title</label>
+                                                <input type="text" id="quizTitle" name="quiz_title" placeholder="Enter quiz title" required>
+                                                <div id="questionsContainer">
+                                                    <div class="question">
+                                                        <input type="text" name="questions[0][question]" placeholder="Enter question" required>
+                                                        <div class="options">
+                                                            <input type="text" name="questions[0][options][0][option_text]" placeholder="Option 1" required>
+                                                            <input type="text" name="questions[0][options][1][option_text]" placeholder="Option 2" required>
+                                                        </div>
+                                                        <label for="correctAnswer0">Select Correct Answer</label>
+                                                        <select name="questions[0][correct_answer]" id="correctAnswer0" required>
+                                                            <option value="0">Option 1</option>
+                                                            <option value="1">Option 2</option>
+                                                        </select>
+                                                        <button type="button" class="add-option">Add Option</button>
+                                                    </div>
+                                                </div>
+                                                <button type="button" id="addQuestion">Add Question</button>
+                                            </form>
+                                        `);
+                                        saveQuizButton.text('Create Quiz').show();
+                                    } else {
+                                        let quizHtml = `
+                                            <form id="quizForm">
+                                                <h4>Edit Quiz</h4>
+                                                <label for="quizTitle">Quiz Title</label>
+                                                <input type="text" id="quizTitle" name="quiz_title" value="${response.quiz_title}" required>
+                                                <div id="questionsContainer">
+                                        `;
+                                        response.questions.forEach((question, index) => {
+                                            quizHtml += `
+                                                <div class="question">
+                                                    <input type="hidden" name="questions[${index}][question_id]" value="${question.question_id}">
+                                                    <input type="text" name="questions[${index}][question]" value="${question.question}" required>
+                                                    <div class="options">
+                                            `;
+                                            question.options.forEach((option, optIndex) => {
+                                                quizHtml += `
+                                                    <input type="hidden" name="questions[${index}][options][${optIndex}][option_id]" value="${option.option_id || ''}">
+                                                    <input type="text" name="questions[${index}][options][${optIndex}][option_text]" value="${option.option_text}" required>
+                                                `;
+                                            });
+                                            quizHtml += `
+                                                    </div>
+                                                    <label for="correctAnswer${index}">Select Correct Answer</label>
+                                                    <select name="questions[${index}][correct_answer]" id="correctAnswer${index}" required>
+                                            `;
+                                            question.options.forEach((option, optIndex) => {
+                                                quizHtml += `
+                                                    <option value="${optIndex}" ${optIndex == question.correct_answer ? 'selected' : ''}>Option ${optIndex + 1}</option>
+                                                `;
+                                            });
+                                            quizHtml += `
+                                                    </select>
+                                                    <button type="button" class="add-option">Add Option</button>
+                                                </div>
+                                            `;
+                                        });
+                                        quizHtml += '<button type="button" id="addQuestion">Add Question</button></form>';
+                                        modalBody.html(quizHtml);
+                                        saveQuizButton.text('Save Changes').show();
+                                    }
+                                },
+                                error() {
+                                    modalBody.html('<p>Failed to load quiz. Please try again later.</p>');
+                                }
+                            });
+                        });
+
+                        $(document).on('click', '#addQuestion', function() {
+                            const questionIndex = $('#questionsContainer .question').length;
+                            const newQuestionHtml = `
+                                <div class="question">
+                                    <input type="text" name="questions[${questionIndex}][question]" placeholder="Enter question" required>
+                                    <div class="options">
+                                        <input type="text" name="questions[${questionIndex}][options][0][option_text]" placeholder="Option 1" required>
+                                        <input type="text" name="questions[${questionIndex}][options][1][option_text]" placeholder="Option 2" required>
+                                    </div>
+                                    <label for="correctAnswer${questionIndex}">Select Correct Answer</label>
+                                    <select name="questions[${questionIndex}][correct_answer]" id="correctAnswer${questionIndex}" required>
+                                        <option value="0">Option 1</option>
+                                        <option value="1">Option 2</option>
+                                    </select>
+                                    <button type="button" class="add-option">Add Option</button>
+                                </div>
+                            `;
+                            $('#questionsContainer').append(newQuestionHtml);
+                        });
+
+                        $(document).on('click', '.add-option', function() {
+                            const optionsContainer = $(this).siblings('.options'),
+                                questionIndex = $(this).closest('.question').index(),
+                                optionIndex = optionsContainer.children('input[type="text"]').length;
+
+                            optionsContainer.append(`
+                                <input type="text" name="questions[${questionIndex}][options][${optionIndex}][option_text]" placeholder="Option ${optionIndex + 1}" required>
+                            `);
+
+                            const select = $(this).siblings('label').next();
+                            select.append(`<option value="${optionIndex}">Option ${optionIndex + 1}</option>`);
+                        });
+
+                        // Save the quiz data
+                        $('.save-quiz').on('click', () => {
+                            const formData = $('#quizForm').serializeArray();
+                            const courseId = $('[data-bs-target="#quizModal"]').data('id');
+                            formData.push({
+                                name: 'course_id',
+                                value: courseId
+                            });
+
+                            // Validate form before submitting
+                            let valid = true;
+                            $('#quizForm input, #quizForm select').each(function() {
+                                if ($(this).val() === "") {
+                                    valid = false;
+                                    alert("Please fill out all fields before saving.");
+                                    return false;
+                                }
+                            });
+
+                            if (valid) {
+                                $.ajax({
+                                    url: 'save_quiz.php',
+                                    method: 'POST',
+                                    data: $.param(formData),
+                                    dataType: 'json',
+                                    success(response) {
+                                        if (response.success) {
+                                            alert("Quiz successfully updated.");
+                                            $('#quizModal').modal('hide');
+                                        } else {
+                                            alert("Quiz update failed.");
+                                        }
+                                    },
+                                    error(xhr, status, error) {
+                                        console.log(`Error: ${xhr.responseText || error}`);
+                                    },
+                                });
+                            }
+                        });
+                    });
+                </script>
+
 
                 <section id="progress" class="tab-content hidden">
-
                     <?php $sql = "SELECT id, name, profile_pic FROM students WHERE approved = 1";  // Adjust condition as necessary
                     $stmt = $pdo->prepare($sql);
                     $stmt->execute();
@@ -789,6 +974,7 @@ if (isset($_POST['submit_post_comment'])) {
             });
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 
 </html>
