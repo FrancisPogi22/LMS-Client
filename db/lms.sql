@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 27, 2024 at 11:05 PM
+-- Generation Time: Nov 28, 2024 at 07:27 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -110,11 +110,19 @@ INSERT INTO `assessment_submissions` (`id`, `assessment_id`, `student_id`, `cour
 CREATE TABLE `comments` (
   `comment_id` int(11) NOT NULL,
   `post_id` int(11) NOT NULL,
-  `student_id` int(11) NOT NULL,
-  `instructor_id` int(11) NOT NULL,
+  `owner_id` int(11) NOT NULL,
   `content` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `comments`
+--
+
+INSERT INTO `comments` (`comment_id`, `post_id`, `owner_id`, `content`, `created_at`) VALUES
+(4, 21, 10, 'test', '2024-11-28 05:04:48'),
+(7, 21, 25, 'asdsad', '2024-11-28 05:08:38'),
+(10, 21, 10, 'dsadasdas', '2024-11-28 06:21:20');
 
 -- --------------------------------------------------------
 
@@ -148,8 +156,8 @@ CREATE TABLE `completed_modules` (
 --
 
 INSERT INTO `completed_modules` (`id`, `student_id`, `module_id`, `created_at`) VALUES
-(15, 10, 25, '2024-11-27 22:05:16'),
-(16, 10, 26, '2024-11-27 22:05:17');
+(18, 10, 25, '2024-11-28 03:12:32'),
+(19, 10, 26, '2024-11-28 03:12:32');
 
 -- --------------------------------------------------------
 
@@ -312,15 +320,10 @@ CREATE TABLE `options` (
 --
 
 INSERT INTO `options` (`id`, `question_id`, `option_text`, `is_correct`) VALUES
-(100, 47, 'Option 1 Question 1', 0),
-(101, 47, 'Question 1 Option 2', 1),
-(102, 48, 'Question 2 Option 1', 1),
-(103, 48, 'Question 2 Option 2', 0),
-(104, 49, 'Question 3 Option 1', 1),
-(105, 49, 'Question 3 Option 2', 0),
-(106, 49, 'Question 3 Option 3', 0),
-(107, 50, 'dsadas', 0),
-(108, 50, 'dasdsa', 1);
+(113, 53, 'Option 1', 1),
+(114, 53, 'Option 2', 0),
+(115, 54, 'Option 1', 0),
+(116, 54, 'Option 2', 1);
 
 -- --------------------------------------------------------
 
@@ -344,12 +347,19 @@ CREATE TABLE `password_resets` (
 
 CREATE TABLE `posts` (
   `id` int(11) NOT NULL,
-  `course_id` int(11) NOT NULL,
-  `student_id` int(11) NOT NULL,
+  `owner_id` int(11) NOT NULL,
   `content` text DEFAULT NULL,
   `image` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `posts`
+--
+
+INSERT INTO `posts` (`id`, `owner_id`, `content`, `image`, `created_at`) VALUES
+(21, 10, 'dsadsa', 'uploads/A designer woman planning a webiste design.jpg', '2024-11-28 04:45:24'),
+(28, 10, 'dasdas', 'uploads/A group of designers choosing color samples for a website.jpg', '2024-11-28 06:21:15');
 
 -- --------------------------------------------------------
 
@@ -368,10 +378,8 @@ CREATE TABLE `questions` (
 --
 
 INSERT INTO `questions` (`id`, `quiz_id`, `question_text`) VALUES
-(47, 175, 'Question 1'),
-(48, 175, 'Question 2'),
-(49, 175, 'Question 3'),
-(50, 177, 'dsad');
+(53, 179, 'Question 1'),
+(54, 179, 'Question 2');
 
 -- --------------------------------------------------------
 
@@ -390,8 +398,29 @@ CREATE TABLE `quiz` (
 --
 
 INSERT INTO `quiz` (`id`, `course_id`, `quiz_title`) VALUES
-(175, 19, 'Quiz'),
-(177, 22, 'test');
+(179, 19, 'Quiz');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_results`
+--
+
+CREATE TABLE `quiz_results` (
+  `id` int(11) NOT NULL,
+  `student_id` int(11) NOT NULL,
+  `quiz_id` int(11) NOT NULL,
+  `score` int(11) NOT NULL,
+  `total` int(11) NOT NULL,
+  `date_taken` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `quiz_results`
+--
+
+INSERT INTO `quiz_results` (`id`, `student_id`, `quiz_id`, `score`, `total`, `date_taken`) VALUES
+(29, 10, 179, 1, 2, '2024-11-28 11:49:32');
 
 -- --------------------------------------------------------
 
@@ -404,9 +433,21 @@ CREATE TABLE `replies` (
   `comment_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `reply_content` text NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `course_id` int(11) DEFAULT NULL
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `replies`
+--
+
+INSERT INTO `replies` (`reply_id`, `comment_id`, `user_id`, `reply_content`, `created_at`) VALUES
+(3, 4, 10, 'reply 1', '2024-11-28 05:12:38'),
+(4, 4, 25, 'reply 2', '2024-11-28 05:12:51'),
+(5, 7, 25, 'dasdas', '2024-11-28 05:35:47'),
+(6, 7, 10, 'testing', '2024-11-28 05:47:21'),
+(7, 7, 10, 'dsadasd', '2024-11-28 06:01:43'),
+(8, 4, 10, 'dsadasdas', '2024-11-28 06:05:05'),
+(9, 4, 10, 'dadasd', '2024-11-28 06:05:27');
 
 -- --------------------------------------------------------
 
@@ -468,7 +509,8 @@ ALTER TABLE `assessment_submissions`
 -- Indexes for table `comments`
 --
 ALTER TABLE `comments`
-  ADD PRIMARY KEY (`comment_id`);
+  ADD PRIMARY KEY (`comment_id`),
+  ADD KEY `post_id` (`post_id`);
 
 --
 -- Indexes for table `comment_replies`
@@ -556,9 +598,7 @@ ALTER TABLE `password_resets`
 -- Indexes for table `posts`
 --
 ALTER TABLE `posts`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `course_id` (`course_id`),
-  ADD KEY `student_id` (`student_id`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `questions`
@@ -574,6 +614,14 @@ ALTER TABLE `quiz`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `course_id` (`course_id`),
   ADD UNIQUE KEY `quiz_title` (`quiz_title`);
+
+--
+-- Indexes for table `quiz_results`
+--
+ALTER TABLE `quiz_results`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `quiz_id` (`quiz_id`),
+  ADD KEY `student_id` (`student_id`);
 
 --
 -- Indexes for table `replies`
@@ -619,7 +667,7 @@ ALTER TABLE `assessment_submissions`
 -- AUTO_INCREMENT for table `comments`
 --
 ALTER TABLE `comments`
-  MODIFY `comment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `comment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `comment_replies`
@@ -631,7 +679,7 @@ ALTER TABLE `comment_replies`
 -- AUTO_INCREMENT for table `completed_modules`
 --
 ALTER TABLE `completed_modules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `courses`
@@ -679,7 +727,7 @@ ALTER TABLE `module_completion`
 -- AUTO_INCREMENT for table `options`
 --
 ALTER TABLE `options`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=109;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=117;
 
 --
 -- AUTO_INCREMENT for table `password_resets`
@@ -691,19 +739,31 @@ ALTER TABLE `password_resets`
 -- AUTO_INCREMENT for table `posts`
 --
 ALTER TABLE `posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `questions`
 --
 ALTER TABLE `questions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT for table `quiz`
 --
 ALTER TABLE `quiz`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=178;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
+
+--
+-- AUTO_INCREMENT for table `quiz_results`
+--
+ALTER TABLE `quiz_results`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+
+--
+-- AUTO_INCREMENT for table `replies`
+--
+ALTER TABLE `replies`
+  MODIFY `reply_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `students`
@@ -714,6 +774,12 @@ ALTER TABLE `students`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `comments`
+--
+ALTER TABLE `comments`
+  ADD CONSTRAINT `comments_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `e_certificates`
@@ -746,6 +812,13 @@ ALTER TABLE `questions`
 --
 ALTER TABLE `quiz`
   ADD CONSTRAINT `quiz_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `quiz_results`
+--
+ALTER TABLE `quiz_results`
+  ADD CONSTRAINT `quiz_results_ibfk_1` FOREIGN KEY (`quiz_id`) REFERENCES `quiz` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `quiz_results_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

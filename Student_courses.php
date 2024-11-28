@@ -124,6 +124,7 @@ $courses = $courses->fetchAll(PDO::FETCH_ASSOC);
         <nav>
             <ul>
                 <li><a href="about.php">ABOUT US</a></li>
+                <li><a href="forum.php">FORUM</a></li>
                 <?php
                 // Check if the user is logged in
                 if (isset($_SESSION['student_username'])) {

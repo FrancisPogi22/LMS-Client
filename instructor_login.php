@@ -15,6 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if ($instructor && password_verify($password, $instructor['password'])) {
             $_SESSION['instructor_id'] = $instructor['id'];
+            $_SESSION['session_id'] = $instructor['id'];
             $_SESSION['instructor_name'] = $instructor['name'];
             $_SESSION['user_id'] = $instructor['id'];
             header("Location: instructor.php");

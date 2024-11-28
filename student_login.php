@@ -26,6 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if (password_verify($password, $student['password'])) {
                 // Store necessary session variables
                 $_SESSION['student_id'] = $student['id'];
+                $_SESSION['session_id'] = $student['id'];
                 $_SESSION['student_username'] = $student['username'];
                 $_SESSION['student_name'] = $student['name'];
                 $_SESSION['student_email'] = $student['email'];

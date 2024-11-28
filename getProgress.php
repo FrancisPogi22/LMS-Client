@@ -1,23 +1,21 @@
 <?php
 
-function getProgress($student_id, $course_id, $pdo)
+function getQuizProgress($student_id, $course_id, $pdo)
 {
-    $totalModulesQuery = $pdo->prepare("SELECT COUNT(*) FROM modules WHERE course_id = ?");
-    $totalModulesQuery->execute([$course_id]);
-    $totalModules = $totalModulesQuery->fetchColumn();
-
-    $completedModulesQuery = $pdo->prepare("
-        SELECT COUNT(*) 
-        FROM completed_modules cm
-        JOIN modules m ON cm.module_id = m.id
-        WHERE cm.student_id = ? AND m.course_id = ?
+    $quizResultsQuery = $pdo->prepare("
+        SELECT SUM(score) AS total_score, SUM(total) AS total_questions
+        FROM quiz_results
+        WHERE student_id = ? AND quiz_id IN (SELECT id FROM quiz WHERE course_id = ?)
     ");
-    $completedModulesQuery->execute([$student_id, $course_id]);
-    $completedModules = $completedModulesQuery->fetchColumn();
+    $quizResultsQuery->execute([$student_id, $course_id]);
+    $quizResults = $quizResultsQuery->fetch(PDO::FETCH_ASSOC);
 
-    if ($totalModules > 0) {
-        return ($completedModules / $totalModules) * 100;
+    $totalScore = $quizResults['total_score'];
+    $totalQuestions = $quizResults['total_questions'];
+
+    if ($totalQuestions > 0) {
+        return ($totalScore / $totalQuestions) * 100;
     }
-    
+
     return 0;
 }

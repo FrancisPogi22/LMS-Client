@@ -867,5 +867,12 @@ nav ul li a {
 }
 
 .circle-progress {
-  stroke-dasharray: 0, 100; /* Default progress (0%) */
+  stroke-dasharray: 0, 100;
+}
+
+@media screen and (max-width: 767px) {
+  header {
+    flex-direction: column;
+    gap: 20px;
+  }
 }

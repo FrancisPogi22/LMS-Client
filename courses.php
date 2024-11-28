@@ -104,7 +104,15 @@ foreach ($posts as $post) {
 }
 
 // Fetch modules for the course
-$modules = $pdo->prepare("SELECT * FROM modules WHERE course_id = ?");
+$modules = $pdo->prepare("SELECT
+    m.*,
+    q.id AS quiz_id
+FROM
+    modules m
+LEFT JOIN quiz q ON q.course_id = m.course_id
+WHERE
+    m.course_id = ?
+");
 $modules->execute([$course_id]);
 $modules = $modules->fetchAll(PDO::FETCH_ASSOC);
 
@@ -173,6 +181,16 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
             transition: width 0.3s ease;
             /* Smooth transition for width change */
         }
+
+        #progressContainerModules {
+            justify-content: end;
+            gap: 20px;
+            align-items: center;
+            margin-top: 20px;
+            display: flex;
+            width: 100%;
+            margin-bottom: 20px;
+        }
     </style>
     <link rel="stylesheet" href="./assets/theme.css">
     <!-- SweetAlert2 CDN -->
@@ -192,8 +210,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
     </header>
     <div class="tabs">
         <div class="tab active" onclick="openTab(event, 'overviewTab')">Overview</div>
-        <div class="tab" onclick="openTab(event, 'contentTab')">Content</div>
-        <div class="tab" onclick="openTab(event, 'modulesTab')">Modules</div>
         <div class="tab" onclick="openTab(event, 'forumTab')">Forum</div>
         <div class="tab" onclick="openTab(event, 'assessmentTab')">Assessment</div>
         <div class="tab" onclick="openTab(event, 'modules')">Modules</div>
@@ -299,19 +315,18 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
     </div>
     <div id="modules" class="tab-content">
         <div class="tab-progress-container">
-            <div id="progressContainerModules" style="margin-top: 20px; width: 100%; margin-bottom: 20px;">
-                <?php $progress = getProgress($student_id, $course_id, $pdo); ?>
+            <div id="progressContainerModules">
+                <?php $progress = getQuizProgress($student_id, $course_id, $pdo); ?>
                 <label for="progressBarModules" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
-                <svg width="100" height="100" viewBox="0 0 36 36" class="circular-chart">
+                <svg width="40" height="40" viewBox="0 0 36 36" class="circular-chart">
                     <path class="circle-background"
-                        stroke="#f3f3f3" stroke-width="3" fill="none"
+                        stroke="#f3f3f3" stroke-width="4" fill="none"
                         d="M18 2.0845 a 15.915 15.915 0 0 1 0 31.83 a 15.915 15.915 0 0 1 0 -31.83" />
                     <path class="circle-progress"
-                        stroke="#4caf50" stroke-width="3" fill="none"
+                        stroke="#4caf50" stroke-width="4" fill="none"
                         stroke-dasharray="<?php echo $progress; ?>, 100"
                         d="M18 2.0845 a 15.915 15.915 0 0 1 0 31.83 a 15.915 15.915 0 0 1 0 -31.83" />
                 </svg>
-                <p class="progress-label"><?php echo $progress; ?>%</p>
             </div>
         </div>
         <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Modules (PDF)</h3>
@@ -325,7 +340,16 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                             <div class="module-title" style="font-size: 14px; font-weight: bold; color: #333; flex: 1;">
                                 <?php echo htmlspecialchars($module['title']); ?>
                             </div><br>
-                            <button onclick="viewPDF('<?php echo htmlspecialchars($module['module_file']); ?>', '<?php echo htmlspecialchars($module['title']); ?>')" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">View Modules</button>
+                            <button onclick="showContent('<?php echo htmlspecialchars($module['title']); ?>',
+                                '<?php if (!$module['module_file']) {
+                                        echo 'video';
+                                    } else {
+                                        echo 'pdf';
+                                    } ?>',
+                                '<?php echo htmlspecialchars($module['module_file']); ?>')"
+                                style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">
+                                View Modules
+                            </button>
                             <?php if (in_array($module['id'], $completed_modules)): ?>
                                 <button class="completion-status" style="padding: 5px 8px; 
                                     background-color: #007bff; 
@@ -348,6 +372,12 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
+        <?php
+        $quiz_id = isset($modules[0]['quiz_id']) ? $modules[0]['quiz_id'] : null;
+        if ($quiz_id):
+        ?>
+            <a href="quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz_id; ?>" class="take-quiz-button" style="margin-top: 10px; display: inline-block; padding: 10px 15px; background-color: #4caf50; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">Take Quiz</a>
+        <?php endif; ?>
     </div>
 
     <script>
@@ -400,109 +430,6 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                 });
         }
     </script>
-
-    <!-- Modules Tab -->
-    <div id="modulesTab" class="tab-content">
-        <!-- Course Progress Bar -->
-        <div id="progressContainerModules" style="margin-top: 20px; width: 100%; margin-bottom: 20px;">
-            <?php
-            $progress = getStudentProgress($student_id, $course_id, $pdo, "module");
-            ?>
-            <label for="progressBarModules" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
-            <div style="background-color: #f3f3f3; width: 100%; border-radius: 5px; overflow: hidden;" class="progress-bar">
-                <div id="progressBar" class="progress" style="height: 15px;width: <?php echo $progress; ?>%; background-color: #4caf50;"></div>
-            </div>
-        </div>
-
-        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Modules (PDF)</h3>
-        <div class="uploaded-modules" style="list-style-type: none; padding: 0; margin-top: 10px;">
-            <?php if (empty($modules)): ?>
-                <p>No PDF files available for this course yet.</p>
-            <?php else: ?>
-                <?php foreach ($modules as $module): ?>
-                    <?php if ($module['module_file']): ?>
-                        <div class="module" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #ddd;">
-                            <div class="module-box" style="border: 1px solid black; border-radius: 8px; padding: 10px; width: 100%; margin-bottom: 10px;">
-                                <div class="module-title" style="font-size: 14px; font-weight: bold; color: #333; flex: 1;">
-                                    <?php echo htmlspecialchars($module['title']); ?>
-                                </div><br>
-                                <button onclick="viewPDF('<?php echo htmlspecialchars($module['module_file']); ?>', '<?php echo htmlspecialchars($module['title']); ?>')" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">View Modules</button>
-                                <?php if (in_array($module['id'], $completed_modules)): ?>
-                                    <button class="completion-status" style="
-                                    padding: 5px 8px; 
-                                    background-color: #007bff; 
-                                    color: white; 
-                                    border: none; 
-                                    border-radius: 4px; 
-                                    cursor: not-allowed; 
-                                    font-size: 12px;"
-                                        disabled>
-                                        Completed
-                                    </button>
-                                <?php else: ?>
-                                    <form method="POST" style="display: inline;">
-                                        <input type="hidden" name="module_id" value="<?php echo htmlspecialchars($module['id']); ?>">
-                                        <button type="submit" name="mark_done" class="completion-button" style="
-                                        padding: 5px 8px; 
-                                        background-color: #007bff; 
-                                        color: white; 
-                                        border: none; 
-                                        border-radius: 4px; 
-                                        cursor: pointer; 
-                                        font-size: 12px;">
-                                            Mark as Complete
-                                        </button>
-                                    </form>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <!-- Content Tab -->
-    <div id="contentTab" class="tab-content" style="display: none;">
-        <!-- Progress Bar -->
-        <div id="progressContainer" style="margin-top: 20px; width: 100%;">
-            <?php
-            $progress = getStudentProgress($student_id, $course_id, $pdo, "video");
-            ?>
-            <label for="progressBar" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
-            <div style="background-color: #f3f3f3; width: 100%; border-radius: 5px; overflow: hidden;" class="progress-bar">
-                <div id="progressBar" class="progress" style="height: 15px;width: <?php echo $progress; ?>%; background-color: #4caf50;"></div>
-            </div>
-        </div>
-
-        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Videos</h3>
-        <div class="uploaded-modules" style="list-style-type: none; padding: 0; margin-top: 10px;">
-            <?php if (empty($modules)): ?>
-                <p>No videos available for this course yet.</p>
-            <?php else: ?>
-                <?php foreach ($modules as $module): ?>
-                    <?php if ($module['video_file']): ?>
-                        <div class="module" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #ddd;">
-                            <div class="module-box" style="border: 1px solid black; border-radius: 8px; padding: 10px; width: 100%; margin-bottom: 10px;">
-                                <div class="module-title" style="font-size: 14px; font-weight: bold; color: #333; flex: 1;"><?php echo htmlspecialchars($module['title']); ?></div><br>
-                                <button onclick="showVideo('<?php echo htmlspecialchars($module['video_file']); ?>', '<?php echo htmlspecialchars($module['title']); ?>')" style="padding: 5px 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">View Video</button>
-                                <?php if (in_array($module['id'], $completed_modules)): ?>
-                                    <button class="completion-status" style="padding: 5px 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: not-allowed; font-size: 12px;" disabled>Completed</button>
-                                <?php else: ?>
-                                    <form method="POST" style="display: inline;">
-                                        <input type="hidden" name="module_id" value="<?php echo htmlspecialchars($module['id']); ?>">
-                                        <button type="submit" name="mark_done" class="completion-button" style="padding: 5px 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                            Mark as Complete
-                                        </button>
-                                    </form>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-    </div>
 
     <!-- PDF Modal -->
     <div id="pdfModal" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center;">
