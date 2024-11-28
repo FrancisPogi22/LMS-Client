@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reply_content'])) {
 }
 
 // Fetch posts for the course (from all enrolled students)
-$posts = $pdo->prepare("SELECT p.*, s.name as student_name FROM posts p JOIN students s ON p.student_id = s.id WHERE p.course_id = ?");
+$posts = $pdo->prepare("SELECT p.*, s.name as student_name FROM posts p JOIN students s ON p.owner_id = s.id WHERE p.course_id = ?");
 $posts->execute([$course_id]);
 $posts = $posts->fetchAll(PDO::FETCH_ASSOC);
 

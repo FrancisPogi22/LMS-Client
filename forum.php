@@ -2,12 +2,7 @@
 session_start();
 require 'db_connection.php';
 
-if (!isset($_SESSION['student_id'])) {
-    header("Location: student_login.php");
-    exit();
-}
-
-if (!isset($_SESSION['student_id'])) {
+if (!isset($_SESSION['session_id'])) {
     header("Location: student_login.php");
     exit();
 }
@@ -146,6 +141,7 @@ $posts = getPostsWithCommentsAndReplies($pdo);
     <title>Document</title>
     <link rel="stylesheet" href="./assets/theme.css">
     <link rel="stylesheet" type="text/css" href="student.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <style>
         .post-image {
             max-width: 500px;
@@ -154,6 +150,7 @@ $posts = getPostsWithCommentsAndReplies($pdo);
             margin: 20px auto;
             object-fit: contain;
         }
+
         .comment {
             padding-bottom: 10px;
             margin-bottom: 10px;
@@ -221,6 +218,7 @@ $posts = getPostsWithCommentsAndReplies($pdo);
             width: 80%;
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 
 <body>
@@ -230,19 +228,82 @@ $posts = getPostsWithCommentsAndReplies($pdo);
         </div>
         <nav>
             <ul>
-                <li><a href="about.php">ABOUT US</a></li>
-                <li><a href="forum.php">FORUM</a></li>
                 <?php
                 if (isset($_SESSION['student_username'])) {
                     echo '<li><strong><a href="profile_students.php"><i class="fas fa-user-circle"></i> ' . htmlspecialchars($_SESSION['student_name']) . '</a></strong></li>';
-                    echo '<li><a href="#" id="logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>';
-                } else {
-                    echo '<li><a href="index.php">Login</a></li>';
                 }
                 ?>
             </ul>
         </nav>
-        <script type="text/javascript">
+        <style>
+            .swal2-title {
+                background-color: white;
+            }
+
+            #noResultsMessage {
+                font-size: 18px;
+                color: red;
+                text-align: center;
+                margin-top: 20px;
+            }
+        </style>
+    </header>
+
+    <style>
+        #sidebar li:first-of-type a::before {
+            content: "\f075";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        #sidebar #logout,
+        #sidebar li a {
+            display: flex;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        #sidebar li a.about::before {
+            content: "\f059";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        #logout::before {
+            content: "\f2f5";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+    </style>
+    <section id="sidebar">
+        <div class="sidebar-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
+            </svg>
+        </div>
+        <ul>
+            <li>
+                <a href="forum.php" class="btn-secondary"><span>Forum</span></a>
+            </li>
+            <li><a href="about.php" class="btn-secondary about"><span>ABOUT US</span></a></li>
+            <?php
+            if (isset($_SESSION['student_username'])) {
+                echo '<li><a href="#" id="logout" class="btn-secondary"><span>Logout</span></a></li>';
+            } else {
+                echo '<li><a href="index.php" class="btn-secondary"><span>Login</span></a></li>';
+            }
+            ?>
+        </ul>
+    </section>
+
+    <script>
+        $(document).ready(() => {
             document.getElementById("logout").addEventListener("click", function(event) {
                 event.preventDefault();
 
@@ -260,20 +321,33 @@ $posts = getPostsWithCommentsAndReplies($pdo);
                     }
                 });
             });
-        </script>
-        <style>
-            .swal2-title {
-                background-color: white;
-            }
 
-            #noResultsMessage {
-                font-size: 18px;
-                color: red;
-                text-align: center;
-                margin-top: 20px;
-            }
-        </style>
-    </header>
+            let sidebarLocked = false;
+
+            $('#sidebar').hover(
+                function() {
+                    if (!sidebarLocked) {
+                        $(this).addClass('active');
+                    }
+                },
+                function() {
+                    if (!sidebarLocked) {
+                        $(this).removeClass('active');
+                    }
+                }
+            );
+
+            $('#sidebar .sidebar-btn').click(function() {
+                if (sidebarLocked) {
+                    sidebarLocked = false;
+                    $('#sidebar').removeClass('active');
+                } else {
+                    sidebarLocked = true;
+                    $('#sidebar').addClass('active');
+                }
+            });
+        });
+    </script>
     <section id="forum">
         <div class="wrapper">
             <div class="forum-container">
@@ -382,6 +456,7 @@ $posts = getPostsWithCommentsAndReplies($pdo);
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </body>
 
 </html>

@@ -19,6 +19,7 @@ header {
 
 .logo img {
   height: 40px; /* Adjust as needed */
+  margin-left: 100px;
 }
 
 nav ul {

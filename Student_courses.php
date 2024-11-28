@@ -113,7 +113,9 @@ $courses = $courses->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.0/dist/sweetalert2.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.0/dist/sweetalert2.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="student.css">
+    <link rel="stylesheet" type="text/css" href="./assets/theme.css">
 </head>
 
 <body>
@@ -123,18 +125,12 @@ $courses = $courses->fetchAll(PDO::FETCH_ASSOC);
         </div>
         <nav>
             <ul>
-                <li><a href="about.php">ABOUT US</a></li>
-                <li><a href="forum.php">FORUM</a></li>
                 <?php
                 // Check if the user is logged in
                 if (isset($_SESSION['student_username'])) {
                     // Display the registered username with a profile icon
                     echo '<li><strong><a href="profile_students.php"><i class="fas fa-user-circle"></i> ' . htmlspecialchars($_SESSION['student_name']) . '</a></strong></li>';
                     // Add a logout link with a logout icon and SweetAlert
-                    echo '<li><a href="#" id="logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>';
-                } else {
-                    // Display a login link if not logged in
-                    echo '<li><a href="student_login.php">Login</a></li>';
                 }
                 ?>
             </ul>
@@ -174,6 +170,106 @@ $courses = $courses->fetchAll(PDO::FETCH_ASSOC);
             }
         </style>
     </header>
+
+    <style>
+        #sidebar li:first-of-type a::before {
+            content: "\f075";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        #sidebar #logout,
+        #sidebar li a {
+            display: flex;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        #sidebar li a.about::before {
+            content: "\f059";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        #logout::before {
+            content: "\f2f5";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+    </style>
+    <section id="sidebar">
+        <div class="sidebar-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
+            </svg>
+        </div>
+        <ul>
+            <li>
+                <a href="forum.php" class="btn-secondary"><span>Forum</span></a>
+            </li>
+            <li><a href="about.php" class="btn-secondary about"><span>ABOUT US</span></a></li>
+            <?php
+            if (isset($_SESSION['student_username'])) {
+                echo '<li><a href="#" id="logout" class="btn-secondary"><span>Logout</span></a></li>';
+            } else {
+                echo '<li><a href="index.php" class="btn-secondary"><span>Login</span></a></li>';
+            }
+            ?>
+        </ul>
+    </section>
+
+    <script>
+        $(document).ready(() => {
+            document.getElementById("logout").addEventListener("click", function(event) {
+                event.preventDefault();
+
+                Swal.fire({
+                    title: 'Are you sure you want to logout?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, logout',
+                    cancelButtonText: 'No, cancel',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = 'index.php';
+                    }
+                });
+            });
+
+            let sidebarLocked = false;
+
+            $('#sidebar').hover(
+                function() {
+                    if (!sidebarLocked) {
+                        $(this).addClass('active');
+                    }
+                },
+                function() {
+                    if (!sidebarLocked) {
+                        $(this).removeClass('active');
+                    }
+                }
+            );
+
+            $('#sidebar .sidebar-btn').click(function() {
+                if (sidebarLocked) {
+                    sidebarLocked = false;
+                    $('#sidebar').removeClass('active');
+                } else {
+                    sidebarLocked = true;
+                    $('#sidebar').addClass('active');
+                }
+            });
+        });
+    </script>
 
 
     <main>
@@ -359,7 +455,7 @@ $courses = $courses->fetchAll(PDO::FETCH_ASSOC);
         background-color: #4169e1;
         border-radius: 5px;
         transition: transform 0.2s, background-color 0.2s;
-        height: 50px;
+        height: 80px;
     }
 
     .course:hover {

@@ -218,10 +218,52 @@ function getStudentProgress($student_id, $course_id, $pdo)
                     <span>Welcome, Admin</span>
                     <span>Last Login: <?php echo date('Y-m-d H:i:s'); ?></span>
                 </div>
-                <button class="logout-btn btn-secondary" id="logoutBtn">Logout</button>
             </div>
         </div>
     </section>
+    <section id="sidebar">
+        <div class="sidebar-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
+            </svg>
+        </div>
+        <ul>
+            <li>
+                <button class="logout-btn btn-secondary" id="logoutBtn"><span>Logout</span></button>
+            </li>
+        </ul>
+    </section>
+
+    <script>
+        $(document).ready(() => {
+            let sidebarLocked = false;
+
+            $('#sidebar').hover(
+                function() {
+                    if (!sidebarLocked) {
+                        $(this).addClass('active');
+                    }
+                },
+                function() {
+                    if (!sidebarLocked) {
+                        $(this).removeClass('active');
+                    }
+                }
+            );
+
+            $('#sidebar .sidebar-btn').click(function() {
+                if (sidebarLocked) {
+                    sidebarLocked = false;
+                    $('#sidebar').removeClass('active');
+                } else {
+                    sidebarLocked = true;
+                    $('#sidebar').addClass('active');
+                }
+            });
+        });
+    </script>
+
+
     <section id="admin">
         <div class="wrapper">
             <div class="admin-container">
@@ -367,7 +409,7 @@ function getStudentProgress($student_id, $course_id, $pdo)
                             </select>
                             <button type="submit" name="select_course" class="btn-primary">View</button>
                         </form>
-<br><br>
+                        <br><br>
                         <?php if ($selected_course_id): ?>
                             <h3>Students Enrolled in
                                 "<?php echo htmlspecialchars($courses_dropdown[array_search($selected_course_id, array_column($courses_dropdown, 'id'))]['course_name']); ?>"
@@ -404,14 +446,14 @@ function getStudentProgress($student_id, $course_id, $pdo)
                     </div>
                 </section>
                 <style>
- li1{
-    
-    border: 1px solid black;
-        padding: 10px;
-        margin-bottom: 5px;
-        border-radius: 5px;
+                    li1 {
 
- }
+                        border: 1px solid black;
+                        padding: 10px;
+                        margin-bottom: 5px;
+                        border-radius: 5px;
+
+                    }
                 </style>
                 <section id="manage-courses" class="tab-content active">
                     <h2>Manage Courses</h2>
@@ -439,26 +481,26 @@ function getStudentProgress($student_id, $course_id, $pdo)
                         </form>
                     </div>
                     <div class="course-list">
-                    <?php foreach ($courses as $course): ?>
-                        <div class="course">
-                            <div class="course-info">
-                                <h3 class="course-title"><?php echo htmlspecialchars($course['course_name']); ?></h3>
-                                <div class="course-description">
-                                    <?php echo htmlspecialchars($course['course_description']); ?>
+                        <?php foreach ($courses as $course): ?>
+                            <div class="course">
+                                <div class="course-info">
+                                    <h3 class="course-title"><?php echo htmlspecialchars($course['course_name']); ?></h3>
+                                    <div class="course-description">
+                                        <?php echo htmlspecialchars($course['course_description']); ?>
+                                    </div>
+                                    <br><br>
+                                    <p>Enrolled Students: <?php echo $course['student_count']; ?></p><br><br>
                                 </div>
-                                <br><br>
-                                <p>Enrolled Students: <?php echo $course['student_count']; ?></p><br><br>
+                                <div class="course-actions">
+                                    <a class="edit-btn2" href="edit_course.php?course_id=<?php echo $course['id']; ?>">Edit</a>
+                                    <a class="delete-btn2" href="?delete_course_id=<?php echo $course['id']; ?>"
+                                        onclick="return confirm('Are you sure you want to delete this course?');">Delete</a>
+                                </div>
                             </div>
-                            <div class="course-actions">
-                                <a class="edit-btn2" href="edit_course.php?course_id=<?php echo $course['id']; ?>">Edit</a>
-                                <a class="delete-btn2" href="?delete_course_id=<?php echo $course['id']; ?>"
-                                    onclick="return confirm('Are you sure you want to delete this course?');">Delete</a>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+                        <?php endforeach; ?>
+                    </div>
                 </section>
-             
+
                 <style>
                     /* Style for Edit Button */
                     .edit-btn2 {
@@ -535,384 +577,406 @@ function getStudentProgress($student_id, $course_id, $pdo)
                     }
                 </style>
 
-<section id="add-new-instructors" class="tab-content ">
-    <h2>Add New Instructors</h2>
+                <section id="add-new-instructors" class="tab-content ">
+                    <h2>Add New Instructors</h2>
 
-    <!-- Register New Instructor Form -->
-    <div class="form-container">
-        <h3>Register New Instructor</h3>
-        <form method="POST" enctype="multipart/form-data">
-            <input type="text" name="instructor_name" placeholder="Instructor Name" required>
-            <input type="email" name="instructor_email" placeholder="Instructor Email" required>
-            <input type="password" name="instructor_password" placeholder="Instructor Password" required>
-            <select name="instructor_gender" required>
-                <option value="" disabled selected>Select Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-            </select>
-            <button type="submit" name="register_instructor" class="registerbtn2">Register Instructor</button>
-        </form>
-    </div>
-    <style>
-        /* Style for Register Instructor button */
-.registerbtn2 {
-    background-color: #008CBA;  /* Blue background */
-    color: white;  /* White text */
-    padding: 12px 24px;  /* Padding for larger button */
-    text-align: center;  /* Center the text */
-    text-decoration: none;  /* Remove underline */
-    display: inline-block;  /* Align with other inline elements */
-    font-size: 16px;  /* Font size */
-    border-radius: 5px;  /* Rounded corners */
-    border: none;  /* No border */
-    cursor: pointer;  /* Pointer cursor on hover */
-    transition: background-color 0.3s ease;  /* Smooth transition for background color */
-}
+                    <!-- Register New Instructor Form -->
+                    <div class="form-container">
+                        <h3>Register New Instructor</h3>
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="text" name="instructor_name" placeholder="Instructor Name" required>
+                            <input type="email" name="instructor_email" placeholder="Instructor Email" required>
+                            <input type="password" name="instructor_password" placeholder="Instructor Password" required>
+                            <select name="instructor_gender" required>
+                                <option value="" disabled selected>Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                            <button type="submit" name="register_instructor" class="registerbtn2">Register Instructor</button>
+                        </form>
+                    </div>
+                    <style>
+                        /* Style for Register Instructor button */
+                        .registerbtn2 {
+                            background-color: #008CBA;
+                            /* Blue background */
+                            color: white;
+                            /* White text */
+                            padding: 12px 24px;
+                            /* Padding for larger button */
+                            text-align: center;
+                            /* Center the text */
+                            text-decoration: none;
+                            /* Remove underline */
+                            display: inline-block;
+                            /* Align with other inline elements */
+                            font-size: 16px;
+                            /* Font size */
+                            border-radius: 5px;
+                            /* Rounded corners */
+                            border: none;
+                            /* No border */
+                            cursor: pointer;
+                            /* Pointer cursor on hover */
+                            transition: background-color 0.3s ease;
+                            /* Smooth transition for background color */
+                        }
 
-.registerbtn2:hover {
-    background-color: #007B9E;  /* Darker blue when hovered */
-}
+                        .registerbtn2:hover {
+                            background-color: #007B9E;
+                            /* Darker blue when hovered */
+                        }
+                    </style>
 
-    </style>
+                    <hr> <!-- Divider between form and instructor list -->
 
-    <hr> <!-- Divider between form and instructor list -->
+                    <!-- Instructor List -->
+                    <div class="instructor-list">
+                        <h3>Instructors</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Instructor Name</th>
+                                    <th>Gender</th>
+                                    <th>Email</th>
+                                    <th>Assigned Course</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($instructors as $instructor): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($instructor['name']); ?></td>
+                                        <td><?php echo htmlspecialchars($instructor['gender']); ?></td>
+                                        <td><?php echo htmlspecialchars($instructor['email']); ?></td>
+                                        <td>
+                                            <?php
+                                            $stmt = $pdo->prepare("SELECT course_name FROM courses WHERE instructor_id = ?");
+                                            $stmt->execute([$instructor['id']]);
+                                            $course = $stmt->fetch(PDO::FETCH_ASSOC);
+                                            echo $course ? htmlspecialchars($course['course_name']) : 'Not Assigned';
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <!-- Update Button -->
+                                            <button
+                                                onclick="openUpdateModal('<?php echo $instructor['id']; ?>', '<?php echo htmlspecialchars($instructor['name']); ?>', '<?php echo htmlspecialchars($instructor['email']); ?>', '<?php echo htmlspecialchars($instructor['gender']); ?>')"
+                                                class="btn-update">
+                                                Update
+                                            </button>
+                                            <!-- Delete Instructor Button -->
+                                            <form method="POST" action="delete_instructor.php" style="display:inline;" onsubmit="return confirmDelete();">
+                                                <input type="hidden" name="instructor_id" value="<?php echo $instructor['id']; ?>">
+                                                <button type="submit" class="btn-delete">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <style>
+                    .btn-delete {
+                        background-color: #e74c3c;
+                        color: white;
+                        padding: 8px 15px;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        margin-right: 10px;
+                        transition: background-color 0.3s ease;
+                    }
 
-    <!-- Instructor List -->
-    <div class="instructor-list">
-        <h3>Instructors</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Instructor Name</th>
-                    <th>Gender</th>
-                    <th>Email</th>
-                    <th>Assigned Course</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($instructors as $instructor): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($instructor['name']); ?></td>
-                        <td><?php echo htmlspecialchars($instructor['gender']); ?></td>
-                        <td><?php echo htmlspecialchars($instructor['email']); ?></td>
-                        <td>
-                            <?php
-                                $stmt = $pdo->prepare("SELECT course_name FROM courses WHERE instructor_id = ?");
-                                $stmt->execute([$instructor['id']]);
-                                $course = $stmt->fetch(PDO::FETCH_ASSOC);
-                                echo $course ? htmlspecialchars($course['course_name']) : 'Not Assigned';
-                            ?>
-                        </td>
-                        <td>
-                            <!-- Update Button -->
-                            <button 
-    onclick="openUpdateModal('<?php echo $instructor['id']; ?>', '<?php echo htmlspecialchars($instructor['name']); ?>', '<?php echo htmlspecialchars($instructor['email']); ?>', '<?php echo htmlspecialchars($instructor['gender']); ?>')" 
-    class="btn-update">
-    Update
-</button>                            
-                            <!-- Delete Instructor Button -->
-                            <form method="POST" action="delete_instructor.php" style="display:inline;" onsubmit="return confirmDelete();">
-                                <input type="hidden" name="instructor_id" value="<?php echo $instructor['id']; ?>">
-                                <button type="submit" class="btn-delete">Delete</button>
-                                </form>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-</section>
-<style>
-    
-    .btn-delete {
-    background-color: #e74c3c;
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-right: 10px;
-    transition: background-color 0.3s ease;
-}
+                    .btn-delete:hover {
+                        background-color: #c0392b;
+                    }
 
-.btn-delete:hover {
-    background-color: #c0392b;
-}
+                    .btn-update {
+                        background-color: #3498db;
+                        color: white;
+                        padding: 8px 15px;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        transition: background-color 0.3s ease;
+                    }
 
-.btn-update {
-    background-color: #3498db;
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
-}
+                    .btn-update:hover {
+                        background-color: #2980b9;
+                    }
+                </style>
 
-.btn-update:hover {
-    background-color: #2980b9;
-}
+                <!-- Update Instructor Modal -->
+                <div id="updateInstructorModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeModal()">&times;</span>
+                        <h2>Update Instructor</h2>
 
-</style>
+                        <!-- Form content -->
+                        <form method="POST" action="edit_instructor.php" enctype="multipart/form-data">
+                            <input type="hidden" name="instructor_id" id="update_instructor_id">
 
-<!-- Update Instructor Modal -->
-<div id="updateInstructorModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h2>Update Instructor</h2>
-        
-        <!-- Form content -->
-        <form method="POST" action="edit_instructor.php" enctype="multipart/form-data">
-            <input type="hidden" name="instructor_id" id="update_instructor_id">
-            
-            <label for="update_instructor_name">Instructor Name</label>
-            <input type="text" id="update_instructor_name" name="instructor_name" required>
-            
-            <label for="update_instructor_email">Email</label>
-            <input type="email" id="update_instructor_email" name="instructor_email" required>
-            
-            <label for="update_instructor_gender">Gender</label>
-            <select id="update_instructor_gender" name="instructor_gender" required>
-                <option value="">Select Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-            </select>
-            
-            <label for="course_assignment">Assign Course</label>
-            <select id="course_assignment" name="course_id">
-                <option value="">Select a course</option>
+                            <label for="update_instructor_name">Instructor Name</label>
+                            <input type="text" id="update_instructor_name" name="instructor_name" required>
+
+                            <label for="update_instructor_email">Email</label>
+                            <input type="email" id="update_instructor_email" name="instructor_email" required>
+
+                            <label for="update_instructor_gender">Gender</label>
+                            <select id="update_instructor_gender" name="instructor_gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+
+                            <label for="course_assignment">Assign Course</label>
+                            <select id="course_assignment" name="course_id">
+                                <option value="">Select a course</option>
+                                <?php
+                                // Assuming you have a $courses array containing courses
+                                foreach ($courses as $course): ?>
+                                    <option value="<?php echo $course['id']; ?>"><?php echo htmlspecialchars($course['course_name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <label for="instructor_profile_picture">Profile Picture</label>
+                            <input type="file" id="instructor_profile_picture" name="instructor_profile_picture">
+
+                            <button type="submit" class="btn-update1">Update Instructor</button>
+                        </form>
+                    </div>
+                </div>
+
+                <style>
+                    /* Styling for the Update Instructor button */
+                    .btn-update1 {
+                        background-color: #28a745;
+                        /* Green background */
+                        color: white;
+                        /* White text */
+                        font-size: 16px;
+                        /* Font size */
+                        padding: 12px 25px;
+                        /* Padding for a larger clickable area */
+                        border: none;
+                        /* Remove border */
+                        border-radius: 5px;
+                        /* Slightly rounded corners */
+                        cursor: pointer;
+                        /* Pointer cursor on hover */
+                        transition: background-color 0.3s ease, transform 0.2s ease;
+                        /* Smooth transition for color and scaling */
+                    }
+
+                    /* Hover effect for the Update Instructor button */
+                    .btn-update:hover {
+                        background-color: #218838;
+                        /* Darker green on hover */
+                        transform: scale(1.05);
+                        /* Slightly enlarge the button on hover */
+                    }
+
+                    /* Focus state for better accessibility */
+                    .btn-update:focus {
+                        outline: none;
+                        /* Remove default outline */
+                        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.5);
+                        /* Green outline glow when focused */
+                    }
+                </style>
+
+                <script>
+                    // Function to open the modal and populate the form fields with data
+                    function openUpdateModal(instructorId, instructorName, instructorEmail, instructorGender) {
+                        document.getElementById('updateInstructorModal').style.display = 'block';
+                        document.getElementById('update_instructor_id').value = instructorId;
+                        document.getElementById('update_instructor_name').value = instructorName;
+                        document.getElementById('update_instructor_email').value = instructorEmail;
+                        document.getElementById('update_instructor_gender').value = instructorGender;
+                    }
+
+                    // Function to close the modal
+                    function closeModal() {
+                        document.getElementById('updateInstructorModal').style.display = 'none';
+                    }
+
+                    // Close modal when clicking outside the modal content
+                    window.onclick = function(event) {
+                        if (event.target == document.getElementById('updateInstructorModal')) {
+                            closeModal();
+                        }
+                    }
+
+                    // Function to show SweetAlert success message on successful update or deletion
+                    function showSweetAlert(type, message) {
+                        Swal.fire({
+                            icon: type, // 'success' or 'error'
+                            title: message,
+                            showConfirmButton: true
+                        });
+                    }
+
+                    // SweetAlert on delete confirmation
+                    function confirmDelete() {
+                        const confirmation = confirm("Are you sure you want to delete this instructor?");
+                        if (confirmation) {
+                            showSweetAlert('success', 'Instructor deleted successfully!');
+                        } else {
+                            showSweetAlert('error', 'Instructor deletion cancelled.');
+                        }
+                        return confirmation;
+                    }
+
+                    // Example of calling SweetAlert for successful update (can be used after form submission)
+                    function showUpdateSuccess() {
+                        showSweetAlert('success', 'Instructor updated successfully!');
+                    }
+                </script>
+
+                <!-- After the instructor form submission or deletion logic -->
+
                 <?php
-                    // Assuming you have a $courses array containing courses
-                    foreach ($courses as $course): ?>
-                        <option value="<?php echo $course['id']; ?>"><?php echo htmlspecialchars($course['course_name']); ?></option>
-                <?php endforeach; ?>
-            </select>
-            
-            <label for="instructor_profile_picture">Profile Picture</label>
-            <input type="file" id="instructor_profile_picture" name="instructor_profile_picture">
-            
-            <button type="submit" class="btn-update1">Update Instructor</button>
-            </form>
-    </div>
-</div>
+                if (isset($_GET['status'])) {
+                    $status = $_GET['status'];
+                    $message = '';
+                }
 
-<style>
-    /* Styling for the Update Instructor button */
-    .btn-update1 {
-        background-color: #28a745; /* Green background */
-        color: white; /* White text */
-        font-size: 16px; /* Font size */
-        padding: 12px 25px; /* Padding for a larger clickable area */
-        border: none; /* Remove border */
-        border-radius: 5px; /* Slightly rounded corners */
-        cursor: pointer; /* Pointer cursor on hover */
-        transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transition for color and scaling */
-    }
+                if (isset($_SESSION['status_message'])) {
+                    echo "<script>alert('{$_SESSION['status_message']}');</script>";
+                    unset($_SESSION['status_message']);
+                }
+                ?>
+                <style>
+                    /* Modal hidden by default */
+                    .modal {
+                        display: none;
+                        position: fixed;
+                        z-index: 1;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        overflow: auto;
+                        background-color: rgba(0, 0, 0, 0.4);
+                        /* Black background with opacity */
+                    }
 
-    /* Hover effect for the Update Instructor button */
-    .btn-update:hover {
-        background-color: #218838; /* Darker green on hover */
-        transform: scale(1.05); /* Slightly enlarge the button on hover */
-    }
+                    /* Modal content */
+                    .modal-content {
+                        background-color: #fff;
+                        margin: 15% auto;
+                        padding: 20px;
+                        border: 1px solid #888;
+                        width: 80%;
+                        max-width: 600px;
+                    }
 
-    /* Focus state for better accessibility */
-    .btn-update:focus {
-        outline: none; /* Remove default outline */
-        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.5); /* Green outline glow when focused */
-    }
-</style>
+                    /* Close button */
+                    .close {
+                        color: #aaa;
+                        float: right;
+                        font-size: 28px;
+                        font-weight: bold;
+                    }
 
-<script>
-    // Function to open the modal and populate the form fields with data
-    function openUpdateModal(instructorId, instructorName, instructorEmail, instructorGender) {
-        document.getElementById('updateInstructorModal').style.display = 'block';
-        document.getElementById('update_instructor_id').value = instructorId;
-        document.getElementById('update_instructor_name').value = instructorName;
-        document.getElementById('update_instructor_email').value = instructorEmail;
-        document.getElementById('update_instructor_gender').value = instructorGender;
-    }
+                    .close:hover,
+                    .close:focus {
+                        color: black;
+                        text-decoration: none;
+                        cursor: pointer;
+                    }
+                </style>
+                <section id="students" class="tab-content">
+                    <h2>Students</h2>
+                    <div class="student-list">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Access Code</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($students as $student): ?>
+                                    <tr>
+                                        <td><?php echo $student['id']; ?></td>
+                                        <td><?php echo htmlspecialchars($student['name']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['email']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['code']); ?></td>
+                                        <td>
+                                            <?php echo ($student['approved'] == 1 ? 'Approved' : 'Pending'); ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($student['approved'] == 0): ?>
+                                                <a href="approve.php?id=<?php echo $student['id']; ?>&action=approve"
+                                                    class="approve-btn"
+                                                    style="display: inline-block; width: 120px; height: 40px; line-height: 40px; text-align: center; margin: 5px; border-radius: 5px; background-color: #4CAF50; color: white; border: 1px solid #4CAF50; font-weight: bold; text-decoration: none; transition: background-color 0.3s ease, transform 0.3s ease;"
+                                                    onmouseover="this.style.backgroundColor='#45a049'; this.style.transform='scale(1.05)';"
+                                                    onmouseout="this.style.backgroundColor='#4CAF50'; this.style.transform='scale(1)';">Approve</a>
+                                            <?php else: ?>
+                                                <a href="approve.php?id=<?php echo $student['id']; ?>&action=deny"
+                                                    class="deny-btn"
+                                                    style="display: inline-block; width: 120px; height: 40px; line-height: 40px; text-align: center; margin: 5px; border-radius: 5px; background-color: #f44336; color: white; border: 1px solid #f44336; font-weight: bold; text-decoration: none; transition: background-color 0.3s ease, transform 0.3s ease;"
+                                                    onmouseover="this.style.backgroundColor='#e53935'; this.style.transform='scale(1.05)';"
+                                                    onmouseout="this.style.backgroundColor='#f44336'; this.style.transform='scale(1)';">Deny</a>
+                                            <?php endif; ?>
+                                            <button onclick="openEditModal(<?php echo $student['id']; ?>, '<?php echo htmlspecialchars($student['name']); ?>', '<?php echo htmlspecialchars($student['email']); ?>')"
+                                                style="display: inline-block; width: 120px; height: 40px; line-height: 40px; text-align: center; margin: 5px; border-radius: 5px; background-color: #2196F3; color: white; border: 1px solid #2196F3; font-weight: bold; text-decoration: none; transition: background-color 0.3s ease, transform 0.3s ease;"
+                                                onmouseover="this.style.backgroundColor='#1976D2'; this.style.transform='scale(1.05)';"
+                                                onmouseout="this.style.backgroundColor='#2196F3'; this.style.transform='scale(1)';">Edit</button>
 
-    // Function to close the modal
-    function closeModal() {
-        document.getElementById('updateInstructorModal').style.display = 'none';
-    }
-
-    // Close modal when clicking outside the modal content
-    window.onclick = function(event) {
-        if (event.target == document.getElementById('updateInstructorModal')) {
-            closeModal();
-        }
-    }
-
-    // Function to show SweetAlert success message on successful update or deletion
-    function showSweetAlert(type, message) {
-        Swal.fire({
-            icon: type, // 'success' or 'error'
-            title: message,
-            showConfirmButton: true
-        });
-    }
-
-    // SweetAlert on delete confirmation
-    function confirmDelete() {
-        const confirmation = confirm("Are you sure you want to delete this instructor?");
-        if (confirmation) {
-            showSweetAlert('success', 'Instructor deleted successfully!');
-        } else {
-            showSweetAlert('error', 'Instructor deletion cancelled.');
-        }
-        return confirmation;
-    }
-
-    // Example of calling SweetAlert for successful update (can be used after form submission)
-    function showUpdateSuccess() {
-        showSweetAlert('success', 'Instructor updated successfully!');
-    }
-</script>
-
-<!-- After the instructor form submission or deletion logic -->
-
-<?php
-    if (isset($_GET['status'])) {
-        $status = $_GET['status'];
-        $message = '';
-    }
-
-    if (isset($_SESSION['status_message'])) {
-        echo "<script>alert('{$_SESSION['status_message']}');</script>";
-        unset($_SESSION['status_message']);
-    }
-?>
-<style>
-    /* Modal hidden by default */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.4); /* Black background with opacity */
-    }
-
-    /* Modal content */
-    .modal-content {
-        background-color: #fff;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        max-width: 600px;
-    }
-
-    /* Close button */
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-    }
-
-    .close:hover,
-    .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-</style>
-                  <section id="students" class="tab-content">
-    <h2>Students</h2>
-    <div class="student-list">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Access Code</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($students as $student): ?>
-                    <tr>
-                        <td><?php echo $student['id']; ?></td>
-                        <td><?php echo htmlspecialchars($student['name']); ?></td>
-                        <td><?php echo htmlspecialchars($student['email']); ?></td>
-                        <td><?php echo htmlspecialchars($student['code']); ?></td>
-                        <td>
-                            <?php echo ($student['approved'] == 1 ? 'Approved' : 'Pending'); ?>
-                        </td>
-                        <td>
-                        <?php if ($student['approved'] == 0): ?>
-    <a href="approve.php?id=<?php echo $student['id']; ?>&action=approve"
-        class="approve-btn"
-        style="display: inline-block; width: 120px; height: 40px; line-height: 40px; text-align: center; margin: 5px; border-radius: 5px; background-color: #4CAF50; color: white; border: 1px solid #4CAF50; font-weight: bold; text-decoration: none; transition: background-color 0.3s ease, transform 0.3s ease;"
-        onmouseover="this.style.backgroundColor='#45a049'; this.style.transform='scale(1.05)';"
-        onmouseout="this.style.backgroundColor='#4CAF50'; this.style.transform='scale(1)';">Approve</a>
-<?php else: ?>
-    <a href="approve.php?id=<?php echo $student['id']; ?>&action=deny"
-        class="deny-btn"
-        style="display: inline-block; width: 120px; height: 40px; line-height: 40px; text-align: center; margin: 5px; border-radius: 5px; background-color: #f44336; color: white; border: 1px solid #f44336; font-weight: bold; text-decoration: none; transition: background-color 0.3s ease, transform 0.3s ease;"
-        onmouseover="this.style.backgroundColor='#e53935'; this.style.transform='scale(1.05)';"
-        onmouseout="this.style.backgroundColor='#f44336'; this.style.transform='scale(1)';">Deny</a>
-<?php endif; ?>
-<button onclick="openEditModal(<?php echo $student['id']; ?>, '<?php echo htmlspecialchars($student['name']); ?>', '<?php echo htmlspecialchars($student['email']); ?>')"
-    style="display: inline-block; width: 120px; height: 40px; line-height: 40px; text-align: center; margin: 5px; border-radius: 5px; background-color: #2196F3; color: white; border: 1px solid #2196F3; font-weight: bold; text-decoration: none; transition: background-color 0.3s ease, transform 0.3s ease;"
-    onmouseover="this.style.backgroundColor='#1976D2'; this.style.transform='scale(1.05)';"
-    onmouseout="this.style.backgroundColor='#2196F3'; this.style.transform='scale(1)';">Edit</button>
-
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-</section>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
 
 
-<!-- Edit Modal -->
-<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
-    <div style="background-color: white; width: 50%; margin: 10% auto; padding: 20px; border-radius: 8px;">
-        <h3>Edit Student</h3>
-        <form id="editForm" method="POST" action="update_student.php">
-            <input type="hidden" name="id" id="editStudentId">
-            <div style="margin-bottom: 10px;">
-                <label for="editName" style="display: block; font-weight: bold;">Name:</label>
-                <input type="text" name="name" id="editName" style="width: 100%; padding: 8px;" required>
-            </div>
-            <div style="margin-bottom: 10px;">
-                <label for="editEmail" style="display: block; font-weight: bold;">Email:</label>
-                <input type="email" name="email" id="editEmail" style="width: 100%; padding: 8px;" required>
-            </div>
-            <button type="submit" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Changes</button>
-            <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Cancel</button>
-        </form>
-    </div>
-</div>
+                <!-- Edit Modal -->
+                <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
+                    <div style="background-color: white; width: 50%; margin: 10% auto; padding: 20px; border-radius: 8px;">
+                        <h3>Edit Student</h3>
+                        <form id="editForm" method="POST" action="update_student.php">
+                            <input type="hidden" name="id" id="editStudentId">
+                            <div style="margin-bottom: 10px;">
+                                <label for="editName" style="display: block; font-weight: bold;">Name:</label>
+                                <input type="text" name="name" id="editName" style="width: 100%; padding: 8px;" required>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label for="editEmail" style="display: block; font-weight: bold;">Email:</label>
+                                <input type="email" name="email" id="editEmail" style="width: 100%; padding: 8px;" required>
+                            </div>
+                            <button type="submit" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Changes</button>
+                            <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Cancel</button>
+                        </form>
+                    </div>
+                </div>
 
 
-<script>
-// Open Edit Modal
-function openEditModal(id, name, email) {
-    document.getElementById('editStudentId').value = id;
-    document.getElementById('editName').value = name;
-    document.getElementById('editEmail').value = email;
-    document.getElementById('editModal').style.display = 'block';
-}
+                <script>
+                    // Open Edit Modal
+                    function openEditModal(id, name, email) {
+                        document.getElementById('editStudentId').value = id;
+                        document.getElementById('editName').value = name;
+                        document.getElementById('editEmail').value = email;
+                        document.getElementById('editModal').style.display = 'block';
+                    }
 
-// Close Edit Modal
-function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
-}
-</script>
+                    // Close Edit Modal
+                    function closeEditModal() {
+                        document.getElementById('editModal').style.display = 'none';
+                    }
+                </script>
                 <section id="add-new-instructors" class="tab-content">
                     <h2>Register New Instructor</h2>
                     <div class="form-container">
@@ -1061,6 +1125,7 @@ function closeEditModal() {
             });
         });
     </script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 </body>
 
 </html>

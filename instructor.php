@@ -146,6 +146,7 @@ if (isset($_POST['submit_post_comment'])) {
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="./assets/theme.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         .assessment-content .comment-widget {
             padding: 10px;
@@ -256,7 +257,7 @@ if (isset($_POST['submit_post_comment'])) {
                             <img src="<?php echo !empty($instructor['profile_picture']) ? $instructor['profile_picture'] : './images/instructor.png'; ?>" alt="Profile">
                             <span><?php echo htmlspecialchars($_SESSION['instructor_name']); ?></span>
                         </li>
-                        <li><a href="forum.php" style="color:#000000;">FORUM</a></li>
+
                         <div id="profileModal" class="modal">
                             <div class="modal-content">
                                 <span class="close-btn">&times;</span>
@@ -265,7 +266,7 @@ if (isset($_POST['submit_post_comment'])) {
                                 <p><strong>Gender:</strong> <span id="modalGender"><?php echo htmlspecialchars($instructor['gender']); ?></span></p>
                             </div>
                         </div>
-                        <li><a href="javascript:void(0);" id="logout-link" class="btn-secondary">Logout</a></li>
+                        <!-- <li><a href="javascript:void(0);" id="logout-link" class="btn-secondary">Logout</a></li> -->
                     </ul>
                 </nav>
                 <script>
@@ -286,27 +287,95 @@ if (isset($_POST['submit_post_comment'])) {
                             modal.style.display = 'none';
                         }
                     });
-
-                    document.getElementById('logout-link').addEventListener('click', function(e) {
-                        e.preventDefault();
-                        Swal.fire({
-                            title: 'Are you sure?',
-                            text: 'Do you want to logout?',
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonText: 'Yes, Logout',
-                            cancelButtonText: 'Cancel',
-                            reverseButtons: true
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = 'index.php';
-                            }
-                        });
-                    });
                 </script>
             </div>
         </div>
     </section>
+
+    <style>
+        #sidebar #logout-link,
+        #sidebar li:first-of-type a {
+            display: flex;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        #sidebar li:first-of-type a::before {
+            content: "\f075";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+        #logout-link::before {
+            content: "\f2f5";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+    </style>
+    <section id="sidebar">
+        <div class="sidebar-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
+            </svg>
+        </div>
+        <ul>
+            <li>
+                <a href="forum.php" class="btn-secondary"><span>Forum</span></a>
+            </li>
+            <li>
+                <a href="javascript:void(0);" id="logout-link" class="btn-secondary"><span>Logout</span></a>
+            </li>
+        </ul>
+    </section>
+
+    <script>
+        $(document).ready(() => {
+            document.getElementById('logout-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'Do you want to logout?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Logout',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = 'index.php';
+                    }
+                });
+            });
+
+            let sidebarLocked = false;
+
+            $('#sidebar').hover(
+                function() {
+                    if (!sidebarLocked) {
+                        $(this).addClass('active');
+                    }
+                },
+                function() {
+                    if (!sidebarLocked) {
+                        $(this).removeClass('active');
+                    }
+                }
+            );
+
+            $('#sidebar .sidebar-btn').click(function() {
+                if (sidebarLocked) {
+                    sidebarLocked = false;
+                    $('#sidebar').removeClass('active');
+                } else {
+                    sidebarLocked = true;
+                    $('#sidebar').addClass('active');
+                }
+            });
+        });
+    </script>
     <section id="instructor">
         <div class="wrapper">
             <div class="instructor-container">

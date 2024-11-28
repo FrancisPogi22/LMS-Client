@@ -99,7 +99,6 @@ button:hover {
   color: var(--global-color-white);
   cursor: pointer;
   text-align: center;
-  min-width: 200px;
 }
 .btn-primary {
   background: var(--global-color-green);
@@ -184,4 +183,69 @@ textarea::placeholder {
     padding-top: 50px;
     padding-bottom: 50px;
   }
+}
+
+#sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9;
+  transition: 0.3s;
+  background: #ffffff;
+  filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04))
+    drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
+  bottom: 0;
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+  width: 80px;
+}
+
+#sidebar li a {
+  align-items: center;
+}
+
+#sidebar.active {
+  width: 300px;
+}
+
+#sidebar li,
+#sidebar ul,
+#sidebar li > * {
+  width: 100%;
+}
+
+#sidebar ul li:not(:last-of-type) {
+  margin-bottom: 10px;
+}
+
+#sidebar ul {
+  padding: 0;
+  margin: 0;
+}
+#sidebar li span {
+  visibility: hidden;
+  opacity: 0;
+  display: none;
+  margin-left: 10px;
+  transition: 0.3s all ease-in-out;
+}
+
+#sidebar #logoutBtn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+#sidebar.active li span {
+  visibility: visible;
+  display: block;
+  opacity: 1;
+}
+
+#sidebar .sidebar-btn {
+  font-size: 20px;
+  cursor: pointer;
+  padding: 10px 0;
 }
