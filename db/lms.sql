@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 28, 2024 at 07:27 AM
+-- Generation Time: Nov 28, 2024 at 04:07 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -349,6 +349,7 @@ CREATE TABLE `posts` (
   `id` int(11) NOT NULL,
   `owner_id` int(11) NOT NULL,
   `content` text DEFAULT NULL,
+  `course_id` int(11) DEFAULT NULL,
   `image` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -357,9 +358,10 @@ CREATE TABLE `posts` (
 -- Dumping data for table `posts`
 --
 
-INSERT INTO `posts` (`id`, `owner_id`, `content`, `image`, `created_at`) VALUES
-(21, 10, 'dsadsa', 'uploads/A designer woman planning a webiste design.jpg', '2024-11-28 04:45:24'),
-(28, 10, 'dasdas', 'uploads/A group of designers choosing color samples for a website.jpg', '2024-11-28 06:21:15');
+INSERT INTO `posts` (`id`, `owner_id`, `content`, `course_id`, `image`, `created_at`) VALUES
+(21, 10, 'dsadsa', 0, 'uploads/A designer woman planning a webiste design.jpg', '2024-11-28 04:45:24'),
+(28, 10, 'dasdas', 0, 'uploads/A group of designers choosing color samples for a website.jpg', '2024-11-28 06:21:15'),
+(29, 10, 'dsad', NULL, 'uploads/Use for HydraFacial Treatments.webp', '2024-11-28 15:06:04');
 
 -- --------------------------------------------------------
 
@@ -739,7 +741,7 @@ ALTER TABLE `password_resets`
 -- AUTO_INCREMENT for table `posts`
 --
 ALTER TABLE `posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `questions`
