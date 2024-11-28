@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 28, 2024 at 04:07 PM
+-- Generation Time: Nov 28, 2024 at 11:22 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -422,7 +422,7 @@ CREATE TABLE `quiz_results` (
 --
 
 INSERT INTO `quiz_results` (`id`, `student_id`, `quiz_id`, `score`, `total`, `date_taken`) VALUES
-(29, 10, 179, 1, 2, '2024-11-28 11:49:32');
+(68, 10, 179, 1, 2, '2024-11-29 01:19:15');
 
 -- --------------------------------------------------------
 
@@ -759,7 +759,7 @@ ALTER TABLE `quiz`
 -- AUTO_INCREMENT for table `quiz_results`
 --
 ALTER TABLE `quiz_results`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
 
 --
 -- AUTO_INCREMENT for table `replies`
