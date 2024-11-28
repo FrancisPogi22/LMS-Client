@@ -11,7 +11,7 @@
 
 <body>
   <section id="login">
-    <div class="wrapper">
+    <div class="wrapper content ">
       <div class="login-container">
         <h1>Welcome to Learning Portal</h1>
         <div class="button-container">

@@ -65,6 +65,7 @@ foreach ($questions as $question) {
                 <?php else: ?>
                     <form method="POST" action="quiz_result.php">
                         <input type="hidden" name="quiz_id" value="<?php echo $quiz['id']; ?>">
+                        <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
                         <?php foreach ($questions as $index => $question): ?>
                             <div class="question">
                                 <p><strong><?php echo $index + 1; ?>. <?php echo htmlspecialchars($question['question_text']); ?></strong></p>
@@ -94,45 +95,52 @@ foreach ($questions as $question) {
             e.preventDefault();
 
             const formData = new FormData(this);
+            const resultContainer = document.getElementById('result');
+            resultContainer.style.display = 'none';
 
             fetch('quiz_result.php', {
                     method: 'POST',
                     body: formData,
                 })
-                .then(response => response.text())
+                .then(response => response.json())
                 .then(data => {
-                    try {
-                        const jsonData = JSON.parse(data);
+                    if (data.success) {
+                        document.getElementById('scoreText').textContent = `Your score: ${data.score} / ${data.total}`;
+                        resultContainer.style.display = 'block';
+                        document.querySelector('button[type="submit"]').style.display = 'none';
 
-                        if (jsonData.success) {
-                            document.getElementById('scoreText').textContent = `Your score: ${jsonData.score} / ${jsonData.total}`;
-                            document.getElementById('result').style.display = 'block';
-                            document.querySelector('button[type="submit"]').style.display = 'none';
-
-                            if (jsonData.message) {
-                                const messageElement = document.createElement('p');
-                                messageElement.textContent = jsonData.message;
-                                document.getElementById('result').prepend(messageElement);
-                            }
-
-                            const backLink = document.createElement('a');
-                            backLink.textContent = 'Back to dashboard';
-                            backLink.classList.add('btn-primary');
-                            backLink.href = `courses.php?course_id=<?php echo $course_id ?>`;
-                            backLink.style.marginTop = '10px';
-                            backLink.style.display = 'inline-block';
-                            document.getElementById('result').prepend(backLink);
+                        if (data.message) {
+                            const messageElement = document.createElement('p');
+                            messageElement.textContent = data.message;
+                            resultContainer.prepend(messageElement);
                         }
-                    } catch (error) {
-                        console.error('Error parsing JSON:', error);
-                        document.getElementById('scoreText').textContent = 'Error parsing response. Please try again.';
-                        document.getElementById('result').style.display = 'block';
+
+                        const backLink = document.createElement('a');
+                        backLink.textContent = 'Back to dashboard';
+                        backLink.classList.add('btn-primary');
+                        backLink.href = `courses.php?course_id=<?php echo $course_id ?>`;
+                        backLink.style.marginTop = '10px';
+                        backLink.style.display = 'inline-block';
+                        resultContainer.prepend(backLink);
+
+                        if (data.download_link) {
+                            const downloadLink = document.createElement('a');
+                            downloadLink.textContent = 'Download Results as PDF';
+                            downloadLink.classList.add('btn-primary');
+                            downloadLink.href = data.download_link;
+                            downloadLink.download = '';
+                            downloadLink.style.marginTop = '10px';
+                            downloadLink.style.display = 'inline-block';
+                            resultContainer.appendChild(downloadLink);
+                        }
+                    } else {
+                        alert(data.message || 'An error occurred while submitting the quiz.');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     document.getElementById('scoreText').textContent = 'Error submitting quiz. Please try again.';
-                    document.getElementById('result').style.display = 'block';
+                    resultContainer.style.display = 'block';
                 });
         });
     </script>

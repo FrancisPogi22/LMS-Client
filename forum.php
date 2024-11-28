@@ -280,6 +280,13 @@ $posts = getPostsWithCommentsAndReplies($pdo);
             font-size: 18px;
             transition: transform 0.3s ease;
         }
+
+        @media screen and (max-width: 767px) {
+            .comment-form form,
+            .reply-form form {
+                flex-direction: column;
+            }
+        }
     </style>
     <section id="sidebar">
         <div class="sidebar-btn">
@@ -350,7 +357,7 @@ $posts = getPostsWithCommentsAndReplies($pdo);
     </script>
     <section id="forum">
         <div class="wrapper">
-            <div class="forum-container">
+            <div class="forum-container content">
                 <form method="POST" action="" enctype="multipart/form-data">
                     <div class="field-container">
                         <label for="content">Post Content:</label>

@@ -14,7 +14,13 @@ function getQuizProgress($student_id, $course_id, $pdo)
     $totalQuestions = $quizResults['total_questions'];
 
     if ($totalQuestions > 0) {
-        return ($totalScore / $totalQuestions) * 100;
+        $progress = ($totalScore / $totalQuestions) * 100;
+
+        return [
+            'progress' => $progress,
+            'total_score' => $totalScore,
+            'total_questions' => $totalQuestions
+        ];
     }
 
     return 0;

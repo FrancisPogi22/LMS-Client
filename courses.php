@@ -316,7 +316,9 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
     <div id="modules" class="tab-content">
         <div class="tab-progress-container">
             <div id="progressContainerModules">
-                <?php $progress = getQuizProgress($student_id, $course_id, $pdo); ?>
+                <?php
+                $progress = getQuizProgress($student_id, $course_id, $pdo);
+                ?>
                 <label for="progressBarModules" style="font-size: 14px; font-weight: bold; color: #333;">Course Progress:</label>
                 <svg width="40" height="40" viewBox="0 0 36 36" class="circular-chart">
                     <path class="circle-background"
@@ -324,9 +326,15 @@ function getStudentProgress($student_id, $course_id, $pdo, $action)
                         d="M18 2.0845 a 15.915 15.915 0 0 1 0 31.83 a 15.915 15.915 0 0 1 0 -31.83" />
                     <path class="circle-progress"
                         stroke="#4caf50" stroke-width="4" fill="none"
-                        stroke-dasharray="<?php echo $progress; ?>, 100"
+                        stroke-dasharray="<?php echo $progress['progress']; ?>, 100"
                         d="M18 2.0845 a 15.915 15.915 0 0 1 0 31.83 a 15.915 15.915 0 0 1 0 -31.83" />
                 </svg>
+                <?php
+                if ($progress != 0) {
+                    echo "<p>" . $progress['total_score'] . " / " . $progress['total_questions'] . "</p>";
+                }
+                ?>
+
             </div>
         </div>
         <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Uploaded Modules (PDF)</h3>

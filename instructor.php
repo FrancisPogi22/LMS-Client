@@ -178,6 +178,10 @@ if (isset($_POST['submit_post_comment'])) {
             border: 1px solid #000000;
         }
 
+        .add-option {
+            padding: 2px;
+            border: 1px solid #000000;
+        }
         .widget {
             padding: 20px;
             border: 1px solid #000000;
@@ -307,6 +311,7 @@ if (isset($_POST['submit_post_comment'])) {
             font-size: 18px;
             transition: transform 0.3s ease;
         }
+
         #logout-link::before {
             content: "\f2f5";
             font-family: "Font Awesome 5 Free";
@@ -378,7 +383,7 @@ if (isset($_POST['submit_post_comment'])) {
     </script>
     <section id="instructor">
         <div class="wrapper">
-            <div class="instructor-container">
+            <div class="instructor-container content">
                 <section class="profile-section">
                     <img src="<?php echo !empty($instructor['profile_picture']) ? $instructor['profile_picture'] : './images/instructor.png'; ?>" alt="Instructor Profile" class="profile-img">
                     <div class="profile-info">
@@ -601,7 +606,7 @@ if (isset($_POST['submit_post_comment'])) {
 
                         if (!empty($students)): ?>
                             <h3><?php echo htmlspecialchars($course['course_name']); ?> </h3>
-                            <table>
+                            <table style="width: 100%;">
                                 <thead>
                                     <tr>
                                         <th>Profile Picture</th>
@@ -651,6 +656,9 @@ if (isset($_POST['submit_post_comment'])) {
                         </form>
                     </div>
                     <button id="toggle-assessment-form-btn" onclick="toggleAssessmentForm()" class="btn-primary">Send Assessment</button>
+                    <button type="button" class="btn-primary view-responses-btn" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="<?php echo $course['id']; ?>" style="margin-top:10px;">
+                        View Responses
+                    </button>
                     <div class="widget-container">
                         <?php
                         try {
@@ -663,12 +671,15 @@ if (isset($_POST['submit_post_comment'])) {
                                     assessment_submissions.submission_text,
                                     assessment_submissions.created_at,
                                     students.name AS student_name,
-                                    comments.*
+                                    comments.*,
+                                    qr.total,
+                                    qr.score
                                 FROM
                                     assessment_submissions
                                 JOIN students ON students.id = assessment_submissions.student_id
                                 JOIN courses ON courses.id = assessment_submissions.course_id
                                 LEFT JOIN comments ON comments.post_id = assessment_submissions.id
+                                LEFT JOIN quiz_results qr ON qr.student_id = students.id
                                 WHERE courses.instructor_id = :instructor_id
                                 ORDER BY
                                     assessment_submissions.created_at DESC
@@ -706,11 +717,91 @@ if (isset($_POST['submit_post_comment'])) {
                                             data-assessment-link="./uploads/<?php echo $assessment['submission_text']; ?>">
                                             <h4>Send Feedback</h4>
                                         </a>
-                                        <a href="#" class="comment-btn"
+                                        <a href="#" class="comment-btn">
                                             <h4>View Comment</h4>
                                         </a>
+                                        <p>Score: <?php echo $assessment['score']; ?> / <?php echo $assessment['total']; ?></p>
+                                    </div>
+
+                                </div>
+                                <div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="exampleModalLabel">Quiz Results</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body" id="quizResultsContainer">
+                                                <p>Loading...</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <script>
+                                    const viewModal = document.getElementById('viewModal');
+                                    const resultsContainer = document.getElementById('quizResultsContainer');
+
+                                    document.querySelectorAll('.view-responses-btn').forEach(button => {
+                                        button.addEventListener('click', function() {
+                                            const courseId = this.getAttribute('data-id');
+
+                                            resultsContainer.innerHTML = '<p>Loading...</p>';
+
+                                            fetch(`fetch_quiz_results.php?course_id=${courseId}`)
+                                                .then(response => {
+                                                    if (!response.ok) {
+                                                        throw new Error(`HTTP error! Status: ${response.status}`);
+                                                    }
+                                                    return response.text();
+                                                })
+                                                .then(text => {
+                                                    try {
+                                                        const data = JSON.parse(text);
+                                                        if (data.error) {
+                                                            resultsContainer.innerHTML = `<p>${data.error}</p>`;
+                                                        } else {
+                                                            let tableHtml = `
+                                                                <table class="table table-striped">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Student Name</th>
+                                                                            <th>Quiz Title</th>
+                                                                            <th>Score</th>
+                                                                            <th>Total</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                            `;
+
+                                                            data.forEach(result => {
+                                                                tableHtml += `
+                                                                    <tr>
+                                                                        <td>${result.student_name}</td>
+                                                                        <td>${result.quiz_title}</td>
+                                                                        <td>${result.score}</td>
+                                                                        <td>${result.total}</td>
+                                                                    </tr>
+                                                                `;
+                                                            });
+
+                                                            tableHtml += `
+                                                                    </tbody>
+                                                                </table>
+                                                            `;
+                                                            resultsContainer.innerHTML = tableHtml;
+                                                        }
+                                                    } catch (error) {
+                                                        resultsContainer.innerHTML = `<p>Invalid JSON response: ${text}</p>`;
+                                                    }
+                                                })
+                                                .catch(error => {
+                                                    resultsContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
+                                                });
+
+                                        });
+                                    });
+                                </script>
                                 <div id="commendModal" class="modal">
                                     <div class="modal-content">
                                         <div class="close-container">

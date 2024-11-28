@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body>
     <section id="admin">
-        <div class="wrapper">
+        <div class="wrapper content">
             <div class="admin-container">
                 <h1>Admin Login</h1>
                 <form method="POST" action="">

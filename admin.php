@@ -266,7 +266,7 @@ function getStudentProgress($student_id, $course_id, $pdo)
 
     <section id="admin">
         <div class="wrapper">
-            <div class="admin-container">
+            <div class="admin-container content">
                 <div id="dashboard-stats">
                     <div class="stat-box">
                         <i class="bi bi-people"></i>
